@@ -17,6 +17,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Unzip source
         run: unzip -o powerline_src.zip -d .
+      - name: Reset web/index.html (so flutter create regenerates the base-href placeholder)
+        run: rm -f flutter_app/web/index.html flutter_app/web/manifest.json
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -65,7 +67,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Unzip source
-        run: 7z x powerline_src.zip -o.
+        shell: pwsh
+        run: Expand-Archive -Path powerline_src.zip -DestinationPath . -Force
+      - name: Reset web/index.html
+        shell: pwsh
+        run: Remove-Item -Force flutter_app/web/index.html -ErrorAction SilentlyContinue
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
