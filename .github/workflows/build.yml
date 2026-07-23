@@ -4,7 +4,7 @@ on:
     branches: [main]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 concurrency:
@@ -92,8 +92,16 @@ jobs:
         run: |
           $dir = "flutter_app/build/windows/x64/runner/Release"
           if (!(Test-Path $dir)) { $dir = "flutter_app/build/windows/runner/Release" }
-          Compress-Archive -Path "$dir/*" -DestinationPath Powerline_Windows_Build.zip
+          Compress-Archive -Path "$dir/*" -DestinationPath Powerline_Windows_Build.zip -Force
+          Copy-Item Powerline_Windows_Build.zip PowerLine-Windows-Preview.zip -Force
       - uses: actions/upload-artifact@v4
         with:
           name: Powerline_Windows_Build
           path: Powerline_Windows_Build.zip
+      - name: Publish Windows preview release (one-click public download)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: windows-preview
+          name: PowerLine Windows Preview
+          body: "Compiled PowerLine (Windows desktop). Download PowerLine-Windows-Preview.zip, extract it, and run powerline.exe."
+          files: PowerLine-Windows-Preview.zip
