@@ -69,9 +69,11 @@ jobs:
       - name: Unzip source
         shell: pwsh
         run: Expand-Archive -Path powerline_src.zip -DestinationPath . -Force
-      - name: Reset web/index.html
+      - name: Remove stub platform dirs so flutter create scaffolds full runners
         shell: pwsh
-        run: Remove-Item -Force flutter_app/web/index.html -ErrorAction SilentlyContinue
+        run: |
+          Remove-Item -Recurse -Force flutter_app/windows -ErrorAction SilentlyContinue
+          Remove-Item -Force flutter_app/web/index.html -ErrorAction SilentlyContinue
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
