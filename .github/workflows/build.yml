@@ -26,6 +26,13 @@ jobs:
       - name: flutter create (regenerate ephemeral platform files)
         working-directory: flutter_app
         run: flutter create .
+      - name: Bundle fonts (Manrope + JetBrains Mono, variable)
+        working-directory: flutter_app
+        run: |
+          mkdir -p assets/fonts
+          curl -sSL -o assets/fonts/Manrope-var.ttf "https://raw.githubusercontent.com/google/fonts/main/ofl/manrope/Manrope%5Bwght%5D.ttf"
+          curl -sSL -o assets/fonts/JetBrainsMono-var.ttf "https://raw.githubusercontent.com/google/fonts/main/ofl/jetbrainsmono/JetBrainsMono%5Bwght%5D.ttf"
+          ls -la assets/fonts
       - name: pub get
         working-directory: flutter_app
         run: flutter pub get
@@ -81,27 +88,43 @@ jobs:
       - name: flutter create
         working-directory: flutter_app
         run: flutter create .
+      - name: Bundle fonts (Manrope + JetBrains Mono, variable)
+        working-directory: flutter_app
+        shell: bash
+        run: |
+          mkdir -p assets/fonts
+          curl -sSL -o assets/fonts/Manrope-var.ttf "https://raw.githubusercontent.com/google/fonts/main/ofl/manrope/Manrope%5Bwght%5D.ttf"
+          curl -sSL -o assets/fonts/JetBrainsMono-var.ttf "https://raw.githubusercontent.com/google/fonts/main/ofl/jetbrainsmono/JetBrainsMono%5Bwght%5D.ttf"
+          ls -la assets/fonts
       - name: pub get
         working-directory: flutter_app
         run: flutter pub get
       - name: flutter build windows
         working-directory: flutter_app
         run: flutter build windows --release
-      - name: zip windows build
+      - name: zip windows build (V2 + keep original)
         shell: pwsh
         run: |
           $dir = "flutter_app/build/windows/x64/runner/Release"
           if (!(Test-Path $dir)) { $dir = "flutter_app/build/windows/runner/Release" }
           Compress-Archive -Path "$dir/*" -DestinationPath Powerline_Windows_Build.zip -Force
           Copy-Item Powerline_Windows_Build.zip PowerLine-Windows-Preview.zip -Force
+          Copy-Item Powerline_Windows_Build.zip PowerLine-Windows-Preview-V2.zip -Force
       - uses: actions/upload-artifact@v4
         with:
           name: Powerline_Windows_Build
           path: Powerline_Windows_Build.zip
-      - name: Publish Windows preview release (one-click public download)
+      - name: Publish Windows preview release (original tag, kept)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: windows-preview
           name: PowerLine Windows Preview
           body: "Compiled PowerLine (Windows desktop). Download PowerLine-Windows-Preview.zip, extract it, and run powerline.exe."
           files: PowerLine-Windows-Preview.zip
+      - name: Publish Windows preview V2 release (AZD re-theme)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: windows-preview-v2
+          name: PowerLine Windows Preview V2 (AZD re-theme)
+          body: "Compiled PowerLine (Windows desktop) — AZD Global palette, Manrope bundled, no crimson. Download PowerLine-Windows-Preview-V2.zip, extract all, run powerline.exe. If SmartScreen appears: More info -> Run anyway."
+          files: PowerLine-Windows-Preview-V2.zip
