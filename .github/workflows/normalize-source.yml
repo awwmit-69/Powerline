@@ -18,13 +18,13 @@ jobs:
       - name: Expand normalized source
         run: |
           unzip -o powerline-normalized-source.zip
+          git restore --source=HEAD -- .github/workflows/build.yml
           rm powerline-normalized-source.zip
           rm powerline_src.zip
-          rm .github/workflows/normalize-source.yml
       - name: Commit normalized tree
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "Normalize Powerline source and enforce CI"
+          git commit -m "Normalize Powerline source"
           git push origin HEAD:agent/normalize-powerline-source
