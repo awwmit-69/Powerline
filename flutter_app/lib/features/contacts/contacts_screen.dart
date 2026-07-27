@@ -302,9 +302,8 @@ class _ContactDetail extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final s = stateOf(ref);
     final repo = ref.read(appRepositoryProvider);
-    final company = s.companies
-        .where((c) => c.id == contact.companyId)
-        .firstOrNull;
+    final company =
+        s.companies.where((c) => c.id == contact.companyId).firstOrNull;
     final calls = s.calls
         .where(
           (c) =>
@@ -313,9 +312,8 @@ class _ContactDetail extends ConsumerWidget {
         )
         .take(8)
         .toList();
-    final appts = s.appointments
-        .where((a) => a.contactId == contact.id)
-        .toList();
+    final appts =
+        s.appointments.where((a) => a.contactId == contact.id).toList();
 
     return ListView(
       padding: const EdgeInsets.all(20),
@@ -396,8 +394,8 @@ class _ContactDetail extends ConsumerWidget {
                 onPressed: contact.dnc
                     ? null
                     : () => ref
-                          .read(callSessionProvider.notifier)
-                          .placeDemoCall(p.e164),
+                        .read(callSessionProvider.notifier)
+                        .placeDemoCall(p.e164),
                 icon: const Icon(Icons.call, size: 14),
                 label: Text('${p.label}: ${PhoneNumberUtil.format(p.e164)}'),
               ),
@@ -405,9 +403,9 @@ class _ContactDetail extends ConsumerWidget {
               onPressed: contact.primaryPhone == null
                   ? null
                   : () => repo.ensureConversation(
-                      contact.primaryPhone!,
-                      contactId: contact.id,
-                    ),
+                        contact.primaryPhone!,
+                        contactId: contact.id,
+                      ),
               icon: const Icon(Icons.message_outlined, size: 14),
               label: const Text('Message'),
             ),
@@ -415,9 +413,9 @@ class _ContactDetail extends ConsumerWidget {
               onPressed: contact.primaryPhone == null
                   ? null
                   : () => repo.addDnc(
-                      contact.primaryPhone!,
-                      reason: 'marked from contact card',
-                    ),
+                        contact.primaryPhone!,
+                        reason: 'marked from contact card',
+                      ),
               icon: const Icon(Icons.block, size: 14),
               label: const Text('Mark DNC'),
             ),

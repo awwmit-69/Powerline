@@ -35,9 +35,8 @@ class AppShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(callSessionProvider);
     final wide = MediaQuery.of(context).size.width >= 900;
-    final index = _navItems
-        .indexWhere((i) => location.startsWith(i.$1))
-        .clamp(0, 9);
+    final index =
+        _navItems.indexWhere((i) => location.startsWith(i.$1)).clamp(0, 9);
 
     final body = Stack(
       children: [

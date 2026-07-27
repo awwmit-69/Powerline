@@ -33,13 +33,13 @@ class MockProviderCallEngine implements CallEngine {
 
   @override
   EngineStatus get status => EngineStatus(
-    provider: displayName,
-    mockMode: true,
-    connected: false,
-    missingConfiguration: requiredConfig,
-    simulatedCapabilities: simulatedCapabilities,
-    unsupportedCapabilities: unsupportedCapabilities,
-  );
+        provider: displayName,
+        mockMode: true,
+        connected: false,
+        missingConfiguration: requiredConfig,
+        simulatedCapabilities: simulatedCapabilities,
+        unsupportedCapabilities: unsupportedCapabilities,
+      );
 
   @override
   Stream<ActiveCallSnapshot> get callStates => _stateCtrl.stream;
@@ -105,84 +105,84 @@ class MockProviderCallEngine implements CallEngine {
 
 class MockSipCallEngine extends MockProviderCallEngine {
   MockSipCallEngine()
-    : super(
-        providerId: 'sip',
-        displayName: 'SIP (generic)',
-        requiredConfig: ['SIP server', 'username', 'password', 'transport'],
-        simulatedCapabilities: ['registration-state-model'],
-      );
+      : super(
+          providerId: 'sip',
+          displayName: 'SIP (generic)',
+          requiredConfig: ['SIP server', 'username', 'password', 'transport'],
+          simulatedCapabilities: ['registration-state-model'],
+        );
 }
 
 class MockSignalMashCallEngine extends MockProviderCallEngine {
   MockSignalMashCallEngine()
-    : super(
-        providerId: 'signalmash',
-        displayName: 'SignalMash',
-        requiredConfig: ['API key', 'SIP trunk credentials'],
-      );
+      : super(
+          providerId: 'signalmash',
+          displayName: 'SignalMash',
+          requiredConfig: ['API key', 'SIP trunk credentials'],
+        );
 }
 
 class MockTwilioCallEngine extends MockProviderCallEngine {
   MockTwilioCallEngine()
-    : super(
-        providerId: 'twilio',
-        displayName: 'Twilio Programmable Voice',
-        requiredConfig: [
-          'Account SID',
-          'Auth token / API key',
-          'TwiML app or webhook URL',
-        ],
-      );
+      : super(
+          providerId: 'twilio',
+          displayName: 'Twilio Programmable Voice',
+          requiredConfig: [
+            'Account SID',
+            'Auth token / API key',
+            'TwiML app or webhook URL',
+          ],
+        );
 }
 
 class MockVonageCallEngine extends MockProviderCallEngine {
   MockVonageCallEngine()
-    : super(
-        providerId: 'vonage',
-        displayName: 'Vonage Voice API',
-        requiredConfig: [
-          'API key',
-          'API secret',
-          'Application ID + private key',
-        ],
-      );
+      : super(
+          providerId: 'vonage',
+          displayName: 'Vonage Voice API',
+          requiredConfig: [
+            'API key',
+            'API secret',
+            'Application ID + private key',
+          ],
+        );
 }
 
 class MockAsteriskCallEngine extends MockProviderCallEngine {
   MockAsteriskCallEngine()
-    : super(
-        providerId: 'asterisk',
-        displayName: 'Asterisk (AMI/ARI)',
-        requiredConfig: ['AMI host/port', 'AMI user/secret', 'ARI app name'],
-        simulatedCapabilities: ['ami-event-model', 'ari-channel-model'],
-      );
+      : super(
+          providerId: 'asterisk',
+          displayName: 'Asterisk (AMI/ARI)',
+          requiredConfig: ['AMI host/port', 'AMI user/secret', 'ARI app name'],
+          simulatedCapabilities: ['ami-event-model', 'ari-channel-model'],
+        );
 }
 
 class MockVicidialCallEngine extends MockProviderCallEngine {
   MockVicidialCallEngine()
-    : super(
-        providerId: 'vicidial',
-        displayName: 'VICIdial agent API',
-        requiredConfig: [
-          'Server URL',
-          'API user/pass',
-          'Agent login',
-          'Campaign',
-        ],
-        simulatedCapabilities: ['disposition-sync-model', 'lead-pull-model'],
-      );
+      : super(
+          providerId: 'vicidial',
+          displayName: 'VICIdial agent API',
+          requiredConfig: [
+            'Server URL',
+            'API user/pass',
+            'Agent login',
+            'Campaign',
+          ],
+          simulatedCapabilities: ['disposition-sync-model', 'lead-pull-model'],
+        );
 }
 
 class MockAiVoiceCallEngine extends MockProviderCallEngine {
   MockAiVoiceCallEngine()
-    : super(
-        providerId: 'ai-voice',
-        displayName: 'AI Voice provider',
-        requiredConfig: ['Voice provider API key', 'LLM provider API key'],
-        simulatedCapabilities: [
-          'scripted-local-simulation (see AI Agents tab)',
-        ],
-      );
+      : super(
+          providerId: 'ai-voice',
+          displayName: 'AI Voice provider',
+          requiredConfig: ['Voice provider API key', 'LLM provider API key'],
+          simulatedCapabilities: [
+            'scripted-local-simulation (see AI Agents tab)',
+          ],
+        );
 }
 
 /// Launches the platform telephone handler (tel: URI) where the OS supports
@@ -191,13 +191,13 @@ class ExternalDialerCallEngine extends MockProviderCallEngine {
   final Future<bool> Function(Uri uri)? launcher;
 
   ExternalDialerCallEngine({this.launcher})
-    : super(
-        providerId: 'external-dialer',
-        displayName: 'External system dialer',
-        requiredConfig: ['Host OS telephone handler'],
-        simulatedCapabilities: ['tel: URI handoff'],
-        unsupportedCapabilities: ['in-app call control after handoff'],
-      );
+      : super(
+          providerId: 'external-dialer',
+          displayName: 'External system dialer',
+          requiredConfig: ['Host OS telephone handler'],
+          simulatedCapabilities: ['tel: URI handoff'],
+          unsupportedCapabilities: ['in-app call control after handoff'],
+        );
 
   @override
   Future<String> placeCall(String toE164, {String? fromNumberId}) async {

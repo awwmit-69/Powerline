@@ -56,9 +56,8 @@ CsvImportResult contactsFromCsv(
   ).convert(csvText, eol: '\n');
   if (rows.isEmpty) return CsvImportResult(const [], ['empty file'], 0);
 
-  final header = rows.first
-      .map((h) => h.toString().trim().toLowerCase())
-      .toList();
+  final header =
+      rows.first.map((h) => h.toString().trim().toLowerCase()).toList();
   int col(String name) => header.indexOf(name);
   final fi = col('firstname');
   final li = col('lastname');
@@ -91,9 +90,8 @@ CsvImportResult contactsFromCsv(
       id: idGen(),
       firstName: first,
       lastName: last,
-      phones: phone == null
-          ? const []
-          : [PhoneEntry(label: 'mobile', e164: phone)],
+      phones:
+          phone == null ? const [] : [PhoneEntry(label: 'mobile', e164: phone)],
       emails: cell(col('email')).isEmpty ? const [] : [cell(col('email'))],
       tags: cell(col('tags')).isEmpty ? const [] : cell(col('tags')).split('|'),
       timeZone: cell(col('timezone')).isEmpty ? null : cell(col('timezone')),

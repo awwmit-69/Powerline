@@ -300,10 +300,10 @@ class _CampaignsScreenState extends ConsumerState<CampaignsScreen> {
                                   onPressed: st.index == 0
                                       ? null
                                       : () => repo.upsertDeal(
-                                          d.copyWith(
-                                            stage: stages[st.index - 1],
+                                            d.copyWith(
+                                              stage: stages[st.index - 1],
+                                            ),
                                           ),
-                                        ),
                                 ),
                                 IconButton(
                                   tooltip: 'Move right',
@@ -314,10 +314,10 @@ class _CampaignsScreenState extends ConsumerState<CampaignsScreen> {
                                   onPressed: st.index == stages.length - 1
                                       ? null
                                       : () => repo.upsertDeal(
-                                          d.copyWith(
-                                            stage: stages[st.index + 1],
+                                            d.copyWith(
+                                              stage: stages[st.index + 1],
+                                            ),
                                           ),
-                                        ),
                                 ),
                               ],
                             ),

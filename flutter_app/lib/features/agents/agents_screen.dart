@@ -309,24 +309,24 @@ class _AgentsScreenState extends ConsumerState<AgentsScreen> {
   }
 
   Widget _kv(String k, String v) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 3),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 160,
-          child: Text(
-            k,
-            style: const TextStyle(
-              fontSize: 11,
-              color: PowerlineColors.textSecondary,
+        padding: const EdgeInsets.symmetric(vertical: 3),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 160,
+              child: Text(
+                k,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: PowerlineColors.textSecondary,
+                ),
+              ),
             ),
-          ),
+            Expanded(child: Text(v, style: const TextStyle(fontSize: 12))),
+          ],
         ),
-        Expanded(child: Text(v, style: const TextStyle(fontSize: 12))),
-      ],
-    ),
-  );
+      );
 
   Future<void> _run(AiAgent agent) async {
     setState(() => running = true);

@@ -9,16 +9,17 @@ Contact c(
   String phone, {
   bool dnc = false,
   String tz = 'America/Chicago',
-}) => Contact(
-  id: id,
-  firstName: 'F$id',
-  lastName: 'L$id',
-  phones: [PhoneEntry(label: 'mobile', e164: phone)],
-  timeZone: tz,
-  dnc: dnc,
-  createdAt: DateTime(2026),
-  updatedAt: DateTime(2026),
-);
+}) =>
+    Contact(
+      id: id,
+      firstName: 'F$id',
+      lastName: 'L$id',
+      phones: [PhoneEntry(label: 'mobile', e164: phone)],
+      timeZone: tz,
+      dnc: dnc,
+      createdAt: DateTime(2026),
+      updatedAt: DateTime(2026),
+    );
 
 void main() {
   final contacts = [
