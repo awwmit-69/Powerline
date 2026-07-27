@@ -10,7 +10,12 @@ class OutboundMessageRequest {
   final String from;
   final String body;
   final List<String> mediaRefs;
-  const OutboundMessageRequest({required this.to, required this.from, required this.body, this.mediaRefs = const []});
+  const OutboundMessageRequest({
+    required this.to,
+    required this.from,
+    required this.body,
+    this.mediaRefs = const [],
+  });
 }
 
 class MessagingEvent {
@@ -19,7 +24,13 @@ class MessagingEvent {
   final String? body;
   final String? from;
   final String? error;
-  const MessagingEvent({required this.kind, required this.messageId, this.body, this.from, this.error});
+  const MessagingEvent({
+    required this.kind,
+    required this.messageId,
+    this.body,
+    this.from,
+    this.error,
+  });
 }
 
 abstract class MessagingProvider {
@@ -28,6 +39,7 @@ abstract class MessagingProvider {
   Stream<MessagingEvent> get events;
   Future<String> sendSms(OutboundMessageRequest req);
   Future<String> sendMms(OutboundMessageRequest req);
+
   /// Maps a provider-specific inbound webhook payload to a normalized event.
   MessagingEvent mapInboundWebhook(Map<String, dynamic> payload);
   Future<void> dispose();
@@ -41,20 +53,29 @@ class DemoMessagingProvider implements MessagingProvider {
   int _seq = 0;
   bool autoReply;
 
-  DemoMessagingProvider({this.tick = const Duration(milliseconds: 600), this.autoReply = true});
+  DemoMessagingProvider({
+    this.tick = const Duration(milliseconds: 600),
+    this.autoReply = true,
+  });
 
   @override
   String get providerId => 'demo';
 
   @override
   EngineStatus get status => const EngineStatus(
-        provider: 'Demo messaging (local simulation)',
-        mockMode: true,
-        connected: false,
-        missingConfiguration: ['None — demo only'],
-        simulatedCapabilities: ['sms', 'mms-placeholder', 'delivery-receipts', 'simulated-replies', 'opt-out-keywords'],
-        unsupportedCapabilities: ['real SMS/MMS traffic'],
-      );
+    provider: 'Demo messaging (local simulation)',
+    mockMode: true,
+    connected: false,
+    missingConfiguration: ['None — demo only'],
+    simulatedCapabilities: [
+      'sms',
+      'mms-placeholder',
+      'delivery-receipts',
+      'simulated-replies',
+      'opt-out-keywords',
+    ],
+    unsupportedCapabilities: ['real SMS/MMS traffic'],
+  );
 
   @override
   Stream<MessagingEvent> get events => _events.stream;
@@ -71,12 +92,14 @@ class DemoMessagingProvider implements MessagingProvider {
     _events.add(MessagingEvent(kind: 'delivery', messageId: id));
     if (autoReply) {
       await Future<void>.delayed(tick * 2);
-      _events.add(MessagingEvent(
-        kind: 'inbound',
-        messageId: 'reply_$id',
-        from: req.to,
-        body: _cannedReply(req.body),
-      ));
+      _events.add(
+        MessagingEvent(
+          kind: 'inbound',
+          messageId: 'reply_$id',
+          from: req.to,
+          body: _cannedReply(req.body),
+        ),
+      );
     }
   }
 
@@ -95,7 +118,8 @@ class DemoMessagingProvider implements MessagingProvider {
   Future<String> sendMms(OutboundMessageRequest req) => sendSms(req);
 
   @override
-  MessagingEvent mapInboundWebhook(Map<String, dynamic> payload) => MessagingEvent(
+  MessagingEvent mapInboundWebhook(Map<String, dynamic> payload) =>
+      MessagingEvent(
         kind: 'inbound',
         messageId: payload['id']?.toString() ?? 'demo-in',
         from: payload['from']?.toString(),
@@ -119,19 +143,20 @@ class MockMessagingProvider implements MessagingProvider {
 
   @override
   EngineStatus get status => EngineStatus(
-        provider: displayName,
-        mockMode: true,
-        connected: false,
-        missingConfiguration: requiredConfig,
-        simulatedCapabilities: const ['inbound-webhook-mapping'],
-        unsupportedCapabilities: const ['live SMS/MMS'],
-      );
+    provider: displayName,
+    mockMode: true,
+    connected: false,
+    missingConfiguration: requiredConfig,
+    simulatedCapabilities: const ['inbound-webhook-mapping'],
+    unsupportedCapabilities: const ['live SMS/MMS'],
+  );
 
   @override
   Stream<MessagingEvent> get events => _events.stream;
 
   Never _blocked() => throw UnsupportedError(
-      '$displayName is not configured (mock). Required: ${requiredConfig.join(', ')}');
+    '$displayName is not configured (mock). Required: ${requiredConfig.join(', ')}',
+  );
 
   @override
   Future<String> sendSms(OutboundMessageRequest req) async => _blocked();
@@ -141,12 +166,23 @@ class MockMessagingProvider implements MessagingProvider {
   @override
   MessagingEvent mapInboundWebhook(Map<String, dynamic> payload) {
     // Twilio-shaped payloads use MessageSid/From/Body; generic uses id/from/body.
-    final id = payload['MessageSid'] ?? payload['messageId'] ?? payload['id'] ?? 'unknown';
+    final id =
+        payload['MessageSid'] ??
+        payload['messageId'] ??
+        payload['id'] ??
+        'unknown';
     final from = payload['From'] ?? payload['from'];
     final body = payload['Body'] ?? payload['body'];
-    final optOut = body is String &&
-        const ['stop', 'unsubscribe', 'stopall', 'cancel', 'end', 'quit']
-            .contains(body.trim().toLowerCase());
+    final optOut =
+        body is String &&
+        const [
+          'stop',
+          'unsubscribe',
+          'stopall',
+          'cancel',
+          'end',
+          'quit',
+        ].contains(body.trim().toLowerCase());
     return MessagingEvent(
       kind: optOut ? 'opt-out' : 'inbound',
       messageId: id.toString(),
@@ -159,13 +195,28 @@ class MockMessagingProvider implements MessagingProvider {
   Future<void> dispose() async => _events.close();
 }
 
-MockMessagingProvider mockSignalMashMessaging() =>
-    MockMessagingProvider('signalmash', 'SignalMash Messaging', ['API key', '10DLC campaign']);
-MockMessagingProvider mockTwilioMessaging() =>
-    MockMessagingProvider('twilio', 'Twilio Messaging', ['Account SID', 'Auth token', 'Messaging Service SID']);
-MockMessagingProvider mockVonageMessaging() =>
-    MockMessagingProvider('vonage', 'Vonage Messages API', ['API key', 'API secret']);
-MockMessagingProvider mockSipMessaging() =>
-    MockMessagingProvider('sip-simple', 'SIP SIMPLE messaging', ['SIP registration']);
-MockMessagingProvider externalWebhookMessaging() =>
-    MockMessagingProvider('generic-webhook', 'Generic webhook provider', ['Webhook URL', 'Signing secret']);
+MockMessagingProvider mockSignalMashMessaging() => MockMessagingProvider(
+  'signalmash',
+  'SignalMash Messaging',
+  ['API key', '10DLC campaign'],
+);
+MockMessagingProvider mockTwilioMessaging() => MockMessagingProvider(
+  'twilio',
+  'Twilio Messaging',
+  ['Account SID', 'Auth token', 'Messaging Service SID'],
+);
+MockMessagingProvider mockVonageMessaging() => MockMessagingProvider(
+  'vonage',
+  'Vonage Messages API',
+  ['API key', 'API secret'],
+);
+MockMessagingProvider mockSipMessaging() => MockMessagingProvider(
+  'sip-simple',
+  'SIP SIMPLE messaging',
+  ['SIP registration'],
+);
+MockMessagingProvider externalWebhookMessaging() => MockMessagingProvider(
+  'generic-webhook',
+  'Generic webhook provider',
+  ['Webhook URL', 'Signing secret'],
+);

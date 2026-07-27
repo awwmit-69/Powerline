@@ -53,18 +53,23 @@ class ActiveCallSnapshot {
     this.connectedAt,
   });
 
-  ActiveCallSnapshot copyWith({CallState? state, bool? muted, bool? onHold, bool? recording, DateTime? connectedAt}) =>
-      ActiveCallSnapshot(
-        callId: callId,
-        remoteE164: remoteE164,
-        direction: direction,
-        state: state ?? this.state,
-        muted: muted ?? this.muted,
-        onHold: onHold ?? this.onHold,
-        recording: recording ?? this.recording,
-        startedAt: startedAt,
-        connectedAt: connectedAt ?? this.connectedAt,
-      );
+  ActiveCallSnapshot copyWith({
+    CallState? state,
+    bool? muted,
+    bool? onHold,
+    bool? recording,
+    DateTime? connectedAt,
+  }) => ActiveCallSnapshot(
+    callId: callId,
+    remoteE164: remoteE164,
+    direction: direction,
+    state: state ?? this.state,
+    muted: muted ?? this.muted,
+    onHold: onHold ?? this.onHold,
+    recording: recording ?? this.recording,
+    startedAt: startedAt,
+    connectedAt: connectedAt ?? this.connectedAt,
+  );
 }
 
 class CallEngineError {

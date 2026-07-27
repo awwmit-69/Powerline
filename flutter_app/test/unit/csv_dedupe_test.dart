@@ -6,12 +6,13 @@ int _n = 0;
 String idGen() => 'gen_${_n++}';
 
 Contact c(String first, String last, {String? phone}) => Contact(
-    id: 'x${_n++}',
-    firstName: first,
-    lastName: last,
-    phones: phone == null ? const [] : [PhoneEntry(label: 'mobile', e164: phone)],
-    createdAt: DateTime(2026),
-    updatedAt: DateTime(2026));
+  id: 'x${_n++}',
+  firstName: first,
+  lastName: last,
+  phones: phone == null ? const [] : [PhoneEntry(label: 'mobile', e164: phone)],
+  createdAt: DateTime(2026),
+  updatedAt: DateTime(2026),
+);
 
 void main() {
   test('CSV round-trip preserves phone as string', () {
@@ -23,7 +24,8 @@ void main() {
   });
 
   test('CSV import normalizes and skips duplicates', () {
-    const csv = 'firstName,lastName,phone\nJordan,Barlow,214 555 0105\nJordan,Barlow,2145550105\n';
+    const csv =
+        'firstName,lastName,phone\nJordan,Barlow,214 555 0105\nJordan,Barlow,2145550105\n';
     final result = contactsFromCsv(csv, const [], idGen);
     expect(result.imported.length, 1);
     expect(result.skippedDuplicates, 1);
@@ -55,14 +57,27 @@ void main() {
   });
 
   test('merge unions phones/emails/tags and DNC', () {
-    final a = Contact(id: 'a', firstName: 'A', lastName: 'B',
-        phones: const [PhoneEntry(label: 'mobile', e164: '+12145550100')],
-        emails: const ['a@mail.example'], tags: const ['x'],
-        createdAt: DateTime(2026), updatedAt: DateTime(2026));
-    final b = Contact(id: 'b', firstName: 'A', lastName: 'B',
-        phones: const [PhoneEntry(label: 'work', e164: '+12145550200')],
-        emails: const ['b@mail.example'], tags: const ['y'], dnc: true,
-        createdAt: DateTime(2026), updatedAt: DateTime(2026));
+    final a = Contact(
+      id: 'a',
+      firstName: 'A',
+      lastName: 'B',
+      phones: const [PhoneEntry(label: 'mobile', e164: '+12145550100')],
+      emails: const ['a@mail.example'],
+      tags: const ['x'],
+      createdAt: DateTime(2026),
+      updatedAt: DateTime(2026),
+    );
+    final b = Contact(
+      id: 'b',
+      firstName: 'A',
+      lastName: 'B',
+      phones: const [PhoneEntry(label: 'work', e164: '+12145550200')],
+      emails: const ['b@mail.example'],
+      tags: const ['y'],
+      dnc: true,
+      createdAt: DateTime(2026),
+      updatedAt: DateTime(2026),
+    );
     final merged = mergeContacts([a, b]);
     expect(merged.phones.length, 2);
     expect(merged.emails.toSet(), {'a@mail.example', 'b@mail.example'});

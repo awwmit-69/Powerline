@@ -23,23 +23,32 @@ class DemoCallEngine implements CallEngine {
   String? scriptedOutcome;
 
   DemoCallEngine({int? seed, this.tick = const Duration(milliseconds: 900)})
-      : _rng = Random(seed ?? 42);
+    : _rng = Random(seed ?? 42);
 
   @override
   String get providerId => 'demo';
 
   @override
   EngineStatus get status => const EngineStatus(
-        provider: 'Demo VoIP (local simulation)',
-        mockMode: true,
-        connected: false,
-        missingConfiguration: ['No live provider needed — demo only'],
-        simulatedCapabilities: [
-          'place', 'accept', 'reject', 'end', 'hold', 'resume', 'mute', 'dtmf',
-          'transfer', 'conference-marker', 'recording-marker'
-        ],
-        unsupportedCapabilities: ['real audio', 'real PSTN', 'E911'],
-      );
+    provider: 'Demo VoIP (local simulation)',
+    mockMode: true,
+    connected: false,
+    missingConfiguration: ['No live provider needed — demo only'],
+    simulatedCapabilities: [
+      'place',
+      'accept',
+      'reject',
+      'end',
+      'hold',
+      'resume',
+      'mute',
+      'dtmf',
+      'transfer',
+      'conference-marker',
+      'recording-marker',
+    ],
+    unsupportedCapabilities: ['real audio', 'real PSTN', 'E911'],
+  );
 
   @override
   Stream<ActiveCallSnapshot> get callStates => _stateCtrl.stream;
@@ -64,23 +73,32 @@ class DemoCallEngine implements CallEngine {
   void _transition(String callId, CallState to) {
     final c = _require(callId);
     if (!isLegalCallTransition(c.state, to)) {
-      _errorCtrl.add(CallEngineError('illegal-transition', '${c.state} -> $to'));
+      _errorCtrl.add(
+        CallEngineError('illegal-transition', '${c.state} -> $to'),
+      );
       return;
     }
-    _emit(c.copyWith(
-        state: to, connectedAt: to == CallState.connected ? DateTime.now() : null));
+    _emit(
+      c.copyWith(
+        state: to,
+        connectedAt: to == CallState.connected ? DateTime.now() : null,
+      ),
+    );
   }
 
   @override
   Future<String> placeCall(String toE164, {String? fromNumberId}) async {
-    final callId = 'democall_${DateTime.now().millisecondsSinceEpoch}_${_seq++}';
-    _emit(ActiveCallSnapshot(
-      callId: callId,
-      remoteE164: toE164,
-      direction: CallDirection.outbound,
-      state: CallState.preparing,
-      startedAt: DateTime.now(),
-    ));
+    final callId =
+        'democall_${DateTime.now().millisecondsSinceEpoch}_${_seq++}';
+    _emit(
+      ActiveCallSnapshot(
+        callId: callId,
+        remoteE164: toE164,
+        direction: CallDirection.outbound,
+        state: CallState.preparing,
+        startedAt: DateTime.now(),
+      ),
+    );
     unawaited(_progressOutbound(callId));
     return callId;
   }
@@ -128,24 +146,29 @@ class DemoCallEngine implements CallEngine {
   /// Simulates an inbound demo call appearing on this device.
   String simulateInbound(String fromE164) {
     final callId = 'demoin_${DateTime.now().millisecondsSinceEpoch}_${_seq++}';
-    _emit(ActiveCallSnapshot(
-      callId: callId,
-      remoteE164: fromE164,
-      direction: CallDirection.inbound,
-      state: CallState.ringing,
-      startedAt: DateTime.now(),
-    ));
+    _emit(
+      ActiveCallSnapshot(
+        callId: callId,
+        remoteE164: fromE164,
+        direction: CallDirection.inbound,
+        state: CallState.ringing,
+        startedAt: DateTime.now(),
+      ),
+    );
     return callId;
   }
 
   @override
-  Future<void> acceptCall(String callId) async => _transition(callId, CallState.connected);
+  Future<void> acceptCall(String callId) async =>
+      _transition(callId, CallState.connected);
 
   @override
-  Future<void> rejectCall(String callId) async => _transition(callId, CallState.completed);
+  Future<void> rejectCall(String callId) async =>
+      _transition(callId, CallState.completed);
 
   /// Route an unanswered inbound call to voicemail.
-  Future<void> sendToVoicemail(String callId) async => _transition(callId, CallState.voicemail);
+  Future<void> sendToVoicemail(String callId) async =>
+      _transition(callId, CallState.voicemail);
 
   @override
   Future<void> endCall(String callId) async {
@@ -167,10 +190,12 @@ class DemoCallEngine implements CallEngine {
   }
 
   @override
-  Future<void> mute(String callId) async => _emit(_require(callId).copyWith(muted: true));
+  Future<void> mute(String callId) async =>
+      _emit(_require(callId).copyWith(muted: true));
 
   @override
-  Future<void> unmute(String callId) async => _emit(_require(callId).copyWith(muted: false));
+  Future<void> unmute(String callId) async =>
+      _emit(_require(callId).copyWith(muted: false));
 
   @override
   Future<void> sendDtmf(String callId, String digits) async {

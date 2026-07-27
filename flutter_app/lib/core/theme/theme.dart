@@ -10,18 +10,20 @@ class PowerlineColors {
   static const panel = Color(0xFF102A40);
   static const raised = Color(0xFF15202E);
   static const border = Color(0xFF243444);
-  static const textPrimary = Color(0xFFF4F2EC);   // mineral white
+  static const textPrimary = Color(0xFFF4F2EC); // mineral white
   static const textSecondary = Color(0xFFAEB9C7); // silver
   static const cobalt = Color(0xFF2C6BFF);
   static const cobaltDeep = Color(0xFF1E4FCC);
-  static const cyan = Color(0xFF38E1D6);           // signal cyan
-  static const violet = Color(0xFF7C5CFF);         // controlled: AI / voicemail
+  static const cyan = Color(0xFF38E1D6); // signal cyan
+  static const violet = Color(0xFF7C5CFF); // controlled: AI / voicemail
   // Operational state colors
-  static const stateRinging = Color(0xFFE0A537);   // amber — attention
-  static const stateConnected = Color(0xFF12B981); // emerald — connected/success only
-  static const stateHold = Color(0xFF2C6BFF);       // cobalt
-  static const stateFailed = Color(0xFFE5675A);     // red — failed/hang-up only
-  static const stateVoicemail = Color(0xFF7C5CFF);  // violet
+  static const stateRinging = Color(0xFFE0A537); // amber — attention
+  static const stateConnected = Color(
+    0xFF12B981,
+  ); // emerald — connected/success only
+  static const stateHold = Color(0xFF2C6BFF); // cobalt
+  static const stateFailed = Color(0xFFE5675A); // red — failed/hang-up only
+  static const stateVoicemail = Color(0xFF7C5CFF); // violet
 }
 
 ThemeData powerlineTheme() {
@@ -46,7 +48,10 @@ ThemeData powerlineTheme() {
       ),
       margin: EdgeInsets.zero,
     ),
-    dividerTheme: const DividerThemeData(color: PowerlineColors.border, space: 1),
+    dividerTheme: const DividerThemeData(
+      color: PowerlineColors.border,
+      space: 1,
+    ),
     appBarTheme: const AppBarTheme(
       backgroundColor: PowerlineColors.navy,
       foregroundColor: PowerlineColors.textPrimary,
@@ -69,7 +74,9 @@ ThemeData powerlineTheme() {
       ),
     ),
     focusColor: PowerlineColors.cobalt.withValues(alpha: 0.25),
-    tooltipTheme: const TooltipThemeData(waitDuration: Duration(milliseconds: 400)),
+    tooltipTheme: const TooltipThemeData(
+      waitDuration: Duration(milliseconds: 400),
+    ),
     snackBarTheme: const SnackBarThemeData(
       backgroundColor: PowerlineColors.raised,
       contentTextStyle: TextStyle(color: PowerlineColors.textPrimary),
@@ -98,34 +105,36 @@ class PowerlineWordmark extends StatelessWidget {
         ),
         SizedBox(width: size * 0.4),
         Text.rich(
-          TextSpan(children: [
-            TextSpan(
-              text: 'Power',
-              style: TextStyle(
-                fontSize: size,
-                fontWeight: FontWeight.w700,
-                letterSpacing: size * 0.02,
-                color: PowerlineColors.textPrimary,
+          TextSpan(
+            children: [
+              TextSpan(
+                text: 'Power',
+                style: TextStyle(
+                  fontSize: size,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: size * 0.02,
+                  color: PowerlineColors.textPrimary,
+                ),
               ),
-            ),
-            TextSpan(
-              text: 'Line',
-              style: TextStyle(
-                fontSize: size,
-                fontWeight: FontWeight.w300,
-                letterSpacing: size * 0.02,
-                color: PowerlineColors.textSecondary,
+              TextSpan(
+                text: 'Line',
+                style: TextStyle(
+                  fontSize: size,
+                  fontWeight: FontWeight.w300,
+                  letterSpacing: size * 0.02,
+                  color: PowerlineColors.textSecondary,
+                ),
               ),
-            ),
-            TextSpan(
-              text: '\u2122',
-              style: TextStyle(
-                fontSize: size * 0.5,
-                fontWeight: FontWeight.w500,
-                color: PowerlineColors.textSecondary,
+              TextSpan(
+                text: '\u2122',
+                style: TextStyle(
+                  fontSize: size * 0.5,
+                  fontWeight: FontWeight.w500,
+                  color: PowerlineColors.textSecondary,
+                ),
               ),
-            ),
-          ]),
+            ],
+          ),
         ),
       ],
     );
@@ -169,12 +178,15 @@ class DemoBadge extends StatelessWidget {
         border: Border.all(color: PowerlineColors.stateRinging),
         borderRadius: BorderRadius.circular(4),
       ),
-      child: Text(label,
-          style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: PowerlineColors.stateRinging,
-              letterSpacing: 1)),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: PowerlineColors.stateRinging,
+          letterSpacing: 1,
+        ),
+      ),
     );
   }
 }

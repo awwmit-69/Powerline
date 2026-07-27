@@ -35,7 +35,13 @@ List<QueueEntry> buildCampaignQueue({
     return campaign.leadContactIds
         .map((id) => allContacts.where((c) => c.id == id))
         .expand((c) => c)
-        .map((c) => QueueEntry(c, false, 'daily limit reached (${campaign.dailyLimit})'))
+        .map(
+          (c) => QueueEntry(
+            c,
+            false,
+            'daily limit reached (${campaign.dailyLimit})',
+          ),
+        )
         .toList();
   }
 
@@ -61,9 +67,15 @@ List<QueueEntry> buildCampaignQueue({
       continue;
     }
     final localHour = _localHourFor(c.timeZone ?? campaign.timeZone, utcNow);
-    if (localHour < campaign.callingHourStart || localHour >= campaign.callingHourEnd) {
-      entries.add(QueueEntry(
-          c, false, 'outside contact-local calling hours (local hour $localHour)'));
+    if (localHour < campaign.callingHourStart ||
+        localHour >= campaign.callingHourEnd) {
+      entries.add(
+        QueueEntry(
+          c,
+          false,
+          'outside contact-local calling hours (local hour $localHour)',
+        ),
+      );
       continue;
     }
     entries.add(QueueEntry(c, true));

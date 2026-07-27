@@ -51,8 +51,14 @@ class _SearchPaletteState extends ConsumerState<_SearchPalette> {
           child: hits.isEmpty
               ? Padding(
                   padding: const EdgeInsets.all(24),
-                  child: Text(query.isEmpty ? 'Type to search everything.' : 'No results.',
-                      style: const TextStyle(color: PowerlineColors.textSecondary)),
+                  child: Text(
+                    query.isEmpty
+                        ? 'Type to search everything.'
+                        : 'No results.',
+                    style: const TextStyle(
+                      color: PowerlineColors.textSecondary,
+                    ),
+                  ),
                 )
               : ListView.builder(
                   shrinkWrap: true,
@@ -62,11 +68,22 @@ class _SearchPaletteState extends ConsumerState<_SearchPalette> {
                     return ListTile(
                       dense: true,
                       leading: Chip(
-                        label: Text(h.category, style: const TextStyle(fontSize: 10)),
+                        label: Text(
+                          h.category,
+                          style: const TextStyle(fontSize: 10),
+                        ),
                         visualDensity: VisualDensity.compact,
                       ),
-                      title: Text(h.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-                      subtitle: Text(h.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      title: Text(
+                        h.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        h.subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       onTap: () {
                         Navigator.of(context).pop();
                         context.go(h.route);

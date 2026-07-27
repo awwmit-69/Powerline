@@ -23,16 +23,32 @@ class PowerlineApp extends ConsumerWidget {
             const OpenSearchIntent(),
         LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyK):
             const OpenSearchIntent(),
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift,
-            LogicalKeyboardKey.keyD): const GoRouteIntent('/dialpad'),
+        LogicalKeySet(
+          LogicalKeyboardKey.control,
+          LogicalKeyboardKey.shift,
+          LogicalKeyboardKey.keyD,
+        ): const GoRouteIntent(
+          '/dialpad',
+        ),
         LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyM):
             const GoRouteIntent('/messages'),
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift,
-            LogicalKeyboardKey.keyC): const GoRouteIntent('/contacts'),
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift,
-            LogicalKeyboardKey.keyV): const GoRouteIntent('/voicemail'),
+        LogicalKeySet(
+          LogicalKeyboardKey.control,
+          LogicalKeyboardKey.shift,
+          LogicalKeyboardKey.keyC,
+        ): const GoRouteIntent(
+          '/contacts',
+        ),
+        LogicalKeySet(
+          LogicalKeyboardKey.control,
+          LogicalKeyboardKey.shift,
+          LogicalKeyboardKey.keyV,
+        ): const GoRouteIntent(
+          '/voicemail',
+        ),
       },
-      builder: (context, child) => GlobalActions(child: child ?? const SizedBox()),
+      builder: (context, child) =>
+          GlobalActions(child: child ?? const SizedBox()),
     );
   }
 }

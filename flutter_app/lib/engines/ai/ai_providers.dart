@@ -8,7 +8,10 @@ library;
 abstract class ConversationModelProvider {
   String get providerId;
   bool get isMock;
-  Future<String> complete({required String systemPrompt, required List<(String role, String text)> turns});
+  Future<String> complete({
+    required String systemPrompt,
+    required List<(String role, String text)> turns,
+  });
 }
 
 abstract class SpeechToTextProvider {
@@ -50,12 +53,22 @@ class MockLlm implements ConversationModelProvider {
   bool get isMock => true;
 
   @override
-  Future<String> complete({required String systemPrompt, required List<(String, String)> turns}) async {
-    final lastUser = turns.lastWhere((t) => t.$1 == 'user', orElse: () => ('user', '')).$2.toLowerCase();
-    if (lastUser.contains('human') || lastUser.contains('person') || lastUser.contains('representative')) {
+  Future<String> complete({
+    required String systemPrompt,
+    required List<(String, String)> turns,
+  }) async {
+    final lastUser = turns
+        .lastWhere((t) => t.$1 == 'user', orElse: () => ('user', ''))
+        .$2
+        .toLowerCase();
+    if (lastUser.contains('human') ||
+        lastUser.contains('person') ||
+        lastUser.contains('representative')) {
       return '[ESCALATE] Of course — let me connect you with a team member right away.';
     }
-    if (lastUser.contains('yes') || lastUser.contains('tuesday') || lastUser.contains('thursday')) {
+    if (lastUser.contains('yes') ||
+        lastUser.contains('tuesday') ||
+        lastUser.contains('thursday')) {
       return '[BOOK] Great — I have you down. You will get a confirmation text shortly.';
     }
     if (lastUser.contains('price') || lastUser.contains('cost')) {
@@ -71,7 +84,8 @@ class MockLlm implements ConversationModelProvider {
 MockLlm mockAnthropicLlm() => MockLlm('anthropic-mock', 'Anthropic-style');
 MockLlm mockOpenAiLlm() => MockLlm('openai-mock', 'OpenAI-style');
 MockLlm mockGeminiLlm() => MockLlm('gemini-mock', 'Gemini-style');
-MockLlm mockOpenAiCompatibleLlm() => MockLlm('openai-compatible-mock', 'OpenAI-compatible endpoint');
+MockLlm mockOpenAiCompatibleLlm() =>
+    MockLlm('openai-compatible-mock', 'OpenAI-compatible endpoint');
 MockLlm mockLocalLlm() => MockLlm('local-model-mock', 'Local model');
 
 class MockStt implements SpeechToTextProvider {
@@ -80,7 +94,8 @@ class MockStt implements SpeechToTextProvider {
   @override
   bool get isMock => true;
   @override
-  Future<String> transcribeUtterance(String audioRef) async => '[simulated utterance from $audioRef]';
+  Future<String> transcribeUtterance(String audioRef) async =>
+      '[simulated utterance from $audioRef]';
 }
 
 class MockTts implements TextToSpeechProvider {
@@ -89,21 +104,27 @@ class MockTts implements TextToSpeechProvider {
   @override
   bool get isMock => true;
   @override
-  Future<String> synthesize(String text) async => 'demo-tts://len${text.length}';
+  Future<String> synthesize(String text) async =>
+      'demo-tts://len${text.length}';
 }
 
 class MockKnowledge implements KnowledgeProvider {
   final Map<String, String> facts;
-  MockKnowledge([this.facts = const {
-    'inspection': 'Inspections are free and take about 30 minutes.',
-    'insurance': 'We document damage in a format insurers accept.',
-    'warranty': 'Workmanship warranty is provided in writing after the job.',
-  }]);
+  MockKnowledge([
+    this.facts = const {
+      'inspection': 'Inspections are free and take about 30 minutes.',
+      'insurance': 'We document damage in a format insurers accept.',
+      'warranty': 'Workmanship warranty is provided in writing after the job.',
+    },
+  ]);
   @override
   String get providerId => 'mock-knowledge';
   @override
   Future<List<String>> retrieve(String query) async {
     final q = query.toLowerCase();
-    return facts.entries.where((e) => q.contains(e.key)).map((e) => e.value).toList();
+    return facts.entries
+        .where((e) => q.contains(e.key))
+        .map((e) => e.value)
+        .toList();
   }
 }

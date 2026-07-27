@@ -23,8 +23,9 @@ import 'engines/routing/routing.dart';
 import 'engines/voicemail/voicemail_providers.dart';
 import 'package:collection/collection.dart';
 
-final snapshotStoreProvider =
-    Provider<SnapshotStore>((ref) => kIsWeb ? MemorySnapshotStore() : FileSnapshotStore());
+final snapshotStoreProvider = Provider<SnapshotStore>(
+  (ref) => kIsWeb ? MemorySnapshotStore() : FileSnapshotStore(),
+);
 
 final appRepositoryProvider = Provider<AppRepository>((ref) {
   final repo = AppRepository(ref.watch(snapshotStoreProvider));
@@ -49,17 +50,19 @@ final demoCallEngineProvider = Provider<DemoCallEngine>((ref) {
   return e;
 });
 
-final allCallEnginesProvider = Provider<List<CallEngine>>((ref) => [
-      ref.watch(demoCallEngineProvider),
-      ExternalDialerCallEngine(),
-      MockSipCallEngine(),
-      MockSignalMashCallEngine(),
-      MockTwilioCallEngine(),
-      MockVonageCallEngine(),
-      MockAsteriskCallEngine(),
-      MockVicidialCallEngine(),
-      MockAiVoiceCallEngine(),
-    ]);
+final allCallEnginesProvider = Provider<List<CallEngine>>(
+  (ref) => [
+    ref.watch(demoCallEngineProvider),
+    ExternalDialerCallEngine(),
+    MockSipCallEngine(),
+    MockSignalMashCallEngine(),
+    MockTwilioCallEngine(),
+    MockVonageCallEngine(),
+    MockAsteriskCallEngine(),
+    MockVicidialCallEngine(),
+    MockAiVoiceCallEngine(),
+  ],
+);
 
 final demoMessagingProvider = Provider<DemoMessagingProvider>((ref) {
   final p = DemoMessagingProvider();
@@ -67,11 +70,13 @@ final demoMessagingProvider = Provider<DemoMessagingProvider>((ref) {
   return p;
 });
 
-final transcriptionProvider =
-    Provider<TranscriptionProvider>((ref) => DemoTranscriptionProvider());
+final transcriptionProvider = Provider<TranscriptionProvider>(
+  (ref) => DemoTranscriptionProvider(),
+);
 
-final agentSimulatorProvider =
-    Provider<AgentSimulator>((ref) => AgentSimulator(mockAnthropicLlm()));
+final agentSimulatorProvider = Provider<AgentSimulator>(
+  (ref) => AgentSimulator(mockAnthropicLlm()),
+);
 
 // ---- Active call session ----
 class CallSession {
@@ -88,7 +93,8 @@ class CallSession {
     this.notes = '',
   });
 
-  CallSession copyWith({ActiveCallSnapshot? snapshot, String? notes}) => CallSession(
+  CallSession copyWith({ActiveCallSnapshot? snapshot, String? notes}) =>
+      CallSession(
         snapshot: snapshot ?? this.snapshot,
         contact: contact,
         campaignId: campaignId,
@@ -109,7 +115,11 @@ class CallSessionController extends Notifier<CallSession?> {
   DemoCallEngine get _engine => ref.read(demoCallEngineProvider);
   AppRepository get _repo => ref.read(appRepositoryProvider);
 
-  Future<void> placeDemoCall(String e164, {String? fromNumberId, String? campaignId}) async {
+  Future<void> placeDemoCall(
+    String e164, {
+    String? fromNumberId,
+    String? campaignId,
+  }) async {
     if (_repo.isDnc(e164)) {
       _repo.notify('warning', 'Call blocked', '$e164 is on the DNC list.');
       return;
@@ -124,7 +134,12 @@ class CallSessionController extends Notifier<CallSession?> {
     _repo.notify('call', 'Incoming demo call', 'From $fromE164');
   }
 
-  void _attach(String callId, String e164, CallDirection dir, {String? campaignId}) {
+  void _attach(
+    String callId,
+    String e164,
+    CallDirection dir, {
+    String? campaignId,
+  }) {
     final contact = _repo.state.contacts
         .where((c) => c.phones.any((p) => p.e164 == e164))
         .firstOrNull;
@@ -133,7 +148,9 @@ class CallSessionController extends Notifier<CallSession?> {
         callId: callId,
         remoteE164: e164,
         direction: dir,
-        state: dir == CallDirection.inbound ? CallState.ringing : CallState.preparing,
+        state: dir == CallDirection.inbound
+            ? CallState.ringing
+            : CallState.preparing,
         startedAt: DateTime.now(),
       ),
       contact: contact,
@@ -163,10 +180,12 @@ class CallSessionController extends Notifier<CallSession?> {
       startedAt: snap.startedAt,
       answeredAt: snap.connectedAt,
       endedAt: now,
-      durationSeconds:
-          snap.connectedAt == null ? 0 : now.difference(snap.connectedAt!).inSeconds,
+      durationSeconds: snap.connectedAt == null
+          ? 0
+          : now.difference(snap.connectedAt!).inSeconds,
       disposition: switch (snap.state) {
-        CallState.completed => snap.connectedAt != null ? 'contacted' : 'cancelled',
+        CallState.completed =>
+          snap.connectedAt != null ? 'contacted' : 'cancelled',
         CallState.busy => 'busy',
         CallState.noAnswer => 'no-answer',
         CallState.voicemail => 'voicemail',
@@ -187,23 +206,28 @@ class CallSessionController extends Notifier<CallSession?> {
   Future<void> _generateVoicemail(CallRecord record) async {
     final vmId = newId('vm');
     final tp = ref.read(transcriptionProvider);
-    final result = await tp.transcribe('assets/audio/demo_voicemail.wav#${record.id}');
-    _repo.addVoicemail(Voicemail(
-      id: vmId,
-      callRecordId: record.id,
-      remoteE164: record.remoteE164,
-      durationSeconds: 24,
-      transcript: result.text,
-      transcriptConfidence: result.confidence,
-      createdAt: DateTime.now(),
-    ));
+    final result = await tp.transcribe(
+      'assets/audio/demo_voicemail.wav#${record.id}',
+    );
+    _repo.addVoicemail(
+      Voicemail(
+        id: vmId,
+        callRecordId: record.id,
+        remoteE164: record.remoteE164,
+        durationSeconds: 24,
+        transcript: result.text,
+        transcriptConfidence: result.confidence,
+        createdAt: DateTime.now(),
+      ),
+    );
     _repo.updateCall(record.copyWith(voicemailId: vmId));
   }
 
   // Call controls — delegate to engine.
   Future<void> accept() async => _engine.acceptCall(state!.snapshot.callId);
   Future<void> reject() async => _engine.rejectCall(state!.snapshot.callId);
-  Future<void> sendToVoicemail() async => _engine.sendToVoicemail(state!.snapshot.callId);
+  Future<void> sendToVoicemail() async =>
+      _engine.sendToVoicemail(state!.snapshot.callId);
   Future<void> end() async => _engine.endCall(state!.snapshot.callId);
   Future<void> hold() async => _engine.hold(state!.snapshot.callId);
   Future<void> resume() async => _engine.resume(state!.snapshot.callId);
@@ -211,24 +235,29 @@ class CallSessionController extends Notifier<CallSession?> {
     final s = state!.snapshot;
     s.muted ? await _engine.unmute(s.callId) : await _engine.mute(s.callId);
   }
-  Future<void> dtmf(String d) async => _engine.sendDtmf(state!.snapshot.callId, d);
-  Future<void> transfer(String dest) async => _engine.transfer(state!.snapshot.callId, dest);
+
+  Future<void> dtmf(String d) async =>
+      _engine.sendDtmf(state!.snapshot.callId, d);
+  Future<void> transfer(String dest) async =>
+      _engine.transfer(state!.snapshot.callId, dest);
 
   void setNotes(String notes) => state = state?.copyWith(notes: notes);
 
   void recordHandoff(HandoffKind kind, String reason, String from, String to) {
     final s = state;
     if (s == null) return;
-    _repo.addHandoff(HandoffEvent(
-      id: newId('ho'),
-      callRecordId: s.snapshot.callId,
-      kind: kind,
-      reason: reason,
-      fromParty: from,
-      toParty: to,
-      whisperSummary: s.handoff.whisperSummary,
-      createdAt: DateTime.now(),
-    ));
+    _repo.addHandoff(
+      HandoffEvent(
+        id: newId('ho'),
+        callRecordId: s.snapshot.callId,
+        kind: kind,
+        reason: reason,
+        fromParty: from,
+        toParty: to,
+        whisperSummary: s.handoff.whisperSummary,
+        createdAt: DateTime.now(),
+      ),
+    );
   }
 
   void clear() {
@@ -238,7 +267,9 @@ class CallSessionController extends Notifier<CallSession?> {
 }
 
 final callSessionProvider =
-    NotifierProvider<CallSessionController, CallSession?>(CallSessionController.new);
+    NotifierProvider<CallSessionController, CallSession?>(
+      CallSessionController.new,
+    );
 
 // ---- Multi-device ring simulation ----
 class RingSimEvent {
@@ -272,7 +303,11 @@ class DevicePresenceSimulator extends Notifier<List<RingSimEvent>> {
     await Future<void>.delayed(const Duration(seconds: 2));
     state = [
       for (final d in devices)
-        RingSimEvent(d.id, d.name, d.isThisDevice ? 'answered-here' : 'answered-elsewhere')
+        RingSimEvent(
+          d.id,
+          d.name,
+          d.isThisDevice ? 'answered-here' : 'answered-elsewhere',
+        ),
     ];
   }
 
@@ -280,7 +315,9 @@ class DevicePresenceSimulator extends Notifier<List<RingSimEvent>> {
 }
 
 final ringSimProvider =
-    NotifierProvider<DevicePresenceSimulator, List<RingSimEvent>>(DevicePresenceSimulator.new);
+    NotifierProvider<DevicePresenceSimulator, List<RingSimEvent>>(
+      DevicePresenceSimulator.new,
+    );
 
 // ---- Global search ----
 class SearchHit {
@@ -298,7 +335,9 @@ List<SearchHit> globalSearch(AppState s, String query) {
   for (final c in s.contacts) {
     if (c.displayName.toLowerCase().contains(q) ||
         c.phones.any((p) => p.e164.contains(q))) {
-      hits.add(SearchHit('Contact', c.displayName, c.primaryPhone ?? '', '/contacts'));
+      hits.add(
+        SearchHit('Contact', c.displayName, c.primaryPhone ?? '', '/contacts'),
+      );
     }
   }
   for (final co in s.companies) {
@@ -313,17 +352,23 @@ List<SearchHit> globalSearch(AppState s, String query) {
   }
   for (final m in s.messages) {
     if (m.body.toLowerCase().contains(q)) {
-      hits.add(SearchHit('Message', m.body, m.createdAt.toString(), '/messages'));
+      hits.add(
+        SearchHit('Message', m.body, m.createdAt.toString(), '/messages'),
+      );
     }
   }
   for (final cl in s.calls) {
     if (cl.remoteE164.contains(q)) {
-      hits.add(SearchHit('Call', cl.remoteE164, cl.disposition ?? '', '/calls'));
+      hits.add(
+        SearchHit('Call', cl.remoteE164, cl.disposition ?? '', '/calls'),
+      );
     }
   }
   for (final v in s.voicemails) {
     if (v.transcript.toLowerCase().contains(q)) {
-      hits.add(SearchHit('Voicemail', v.transcript, v.remoteE164, '/voicemail'));
+      hits.add(
+        SearchHit('Voicemail', v.transcript, v.remoteE164, '/voicemail'),
+      );
     }
   }
   for (final cp in s.campaigns) {
@@ -337,12 +382,16 @@ List<SearchHit> globalSearch(AppState s, String query) {
     }
   }
   for (final ap in s.appointments) {
-    if (ap.kind.toLowerCase().contains(q) || (ap.address ?? '').toLowerCase().contains(q)) {
-      hits.add(SearchHit('Appointment', ap.kind, ap.startsAt.toString(), '/campaigns'));
+    if (ap.kind.toLowerCase().contains(q) ||
+        (ap.address ?? '').toLowerCase().contains(q)) {
+      hits.add(
+        SearchHit('Appointment', ap.kind, ap.startsAt.toString(), '/campaigns'),
+      );
     }
   }
   for (final d in s.deals) {
-    if (d.nextAction.toLowerCase().contains(q) || d.notes.toLowerCase().contains(q)) {
+    if (d.nextAction.toLowerCase().contains(q) ||
+        d.notes.toLowerCase().contains(q)) {
       hits.add(SearchHit('Deal', d.nextAction, d.stage.name, '/campaigns'));
     }
   }

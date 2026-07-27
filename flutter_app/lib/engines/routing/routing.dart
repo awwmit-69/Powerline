@@ -43,25 +43,35 @@ class RoutingRule {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id, 'name': name, 'strategy': strategy.name, 'deviceIds': deviceIds,
-        'forwardTo': forwardTo, 'delaySeconds': delaySeconds,
-        'businessHoursOnly': businessHoursOnly, 'afterHoursAction': afterHoursAction,
-        'ringGroup': ringGroup, 'priority': priority,
-      };
+    'id': id,
+    'name': name,
+    'strategy': strategy.name,
+    'deviceIds': deviceIds,
+    'forwardTo': forwardTo,
+    'delaySeconds': delaySeconds,
+    'businessHoursOnly': businessHoursOnly,
+    'afterHoursAction': afterHoursAction,
+    'ringGroup': ringGroup,
+    'priority': priority,
+  };
 
   factory RoutingRule.fromJson(Map<String, dynamic> j) => RoutingRule(
-        id: j['id'] as String? ?? '',
-        name: j['name'] as String? ?? '',
-        strategy: RoutingStrategy.values.firstWhere(
-            (s) => s.name == j['strategy'], orElse: () => RoutingStrategy.ringAll),
-        deviceIds: (j['deviceIds'] as List? ?? []).map((e) => e.toString()).toList(),
-        forwardTo: j['forwardTo'] as String?,
-        delaySeconds: (j['delaySeconds'] as num?)?.toInt() ?? 20,
-        businessHoursOnly: j['businessHoursOnly'] as bool? ?? false,
-        afterHoursAction: j['afterHoursAction'] as String? ?? 'voicemail',
-        ringGroup: j['ringGroup'] as String?,
-        priority: (j['priority'] as num?)?.toInt() ?? 0,
-      );
+    id: j['id'] as String? ?? '',
+    name: j['name'] as String? ?? '',
+    strategy: RoutingStrategy.values.firstWhere(
+      (s) => s.name == j['strategy'],
+      orElse: () => RoutingStrategy.ringAll,
+    ),
+    deviceIds: (j['deviceIds'] as List? ?? [])
+        .map((e) => e.toString())
+        .toList(),
+    forwardTo: j['forwardTo'] as String?,
+    delaySeconds: (j['delaySeconds'] as num?)?.toInt() ?? 20,
+    businessHoursOnly: j['businessHoursOnly'] as bool? ?? false,
+    afterHoursAction: j['afterHoursAction'] as String? ?? 'voicemail',
+    ringGroup: j['ringGroup'] as String?,
+    priority: (j['priority'] as num?)?.toInt() ?? 0,
+  );
 }
 
 class RoutingDecision {
@@ -93,53 +103,71 @@ RoutingDecision routeInboundCall({
       switch (rule.afterHoursAction) {
         case 'ai-agent':
           return RoutingDecision(
-              action: 'ai-agent',
-              explanation: 'Rule "${rule.name}": outside business hours -> AI agent');
+            action: 'ai-agent',
+            explanation:
+                'Rule "${rule.name}": outside business hours -> AI agent',
+          );
         case 'forward':
           return RoutingDecision(
-              action: 'forward',
-              forwardTo: rule.forwardTo,
-              explanation: 'Rule "${rule.name}": outside business hours -> forward');
+            action: 'forward',
+            forwardTo: rule.forwardTo,
+            explanation:
+                'Rule "${rule.name}": outside business hours -> forward',
+          );
         default:
           return RoutingDecision(
-              action: 'voicemail',
-              explanation: 'Rule "${rule.name}": outside business hours -> voicemail');
+            action: 'voicemail',
+            explanation:
+                'Rule "${rule.name}": outside business hours -> voicemail',
+          );
       }
     }
     switch (rule.strategy) {
       case RoutingStrategy.directToVoicemail:
         return RoutingDecision(
-            action: 'voicemail', explanation: 'Rule "${rule.name}": direct to voicemail');
+          action: 'voicemail',
+          explanation: 'Rule "${rule.name}": direct to voicemail',
+        );
       case RoutingStrategy.aiFirst:
         return RoutingDecision(
-            action: 'ai-agent', explanation: 'Rule "${rule.name}": AI answers first');
+          action: 'ai-agent',
+          explanation: 'Rule "${rule.name}": AI answers first',
+        );
       case RoutingStrategy.forwardAfterDelay:
       case RoutingStrategy.forwardWhenBusy:
       case RoutingStrategy.forwardWhenOffline:
         final offline = active.isEmpty;
         if (rule.strategy != RoutingStrategy.forwardWhenOffline || offline) {
           return RoutingDecision(
-              action: 'forward',
-              forwardTo: rule.forwardTo,
-              explanation: 'Rule "${rule.name}": forward (${rule.strategy.name})');
+            action: 'forward',
+            forwardTo: rule.forwardTo,
+            explanation: 'Rule "${rule.name}": forward (${rule.strategy.name})',
+          );
         }
         continue;
       case RoutingStrategy.ringSelected:
-        final targets =
-            active.where((d) => rule.deviceIds.contains(d.id)).map((d) => d.id).toList();
+        final targets = active
+            .where((d) => rule.deviceIds.contains(d.id))
+            .map((d) => d.id)
+            .toList();
         if (targets.isEmpty) continue;
         return RoutingDecision(
-            action: 'ring',
-            ringDeviceIds: targets,
-            explanation: 'Rule "${rule.name}": ring selected devices');
+          action: 'ring',
+          ringDeviceIds: targets,
+          explanation: 'Rule "${rule.name}": ring selected devices',
+        );
       case RoutingStrategy.sequential:
-        final targets =
-            active.where((d) => rule.deviceIds.contains(d.id)).map((d) => d.id).toList();
+        final targets = active
+            .where((d) => rule.deviceIds.contains(d.id))
+            .map((d) => d.id)
+            .toList();
         if (targets.isEmpty) continue;
         return RoutingDecision(
-            action: 'ring',
-            ringDeviceIds: [targets.first],
-            explanation: 'Rule "${rule.name}": sequential ring, first device "${targets.first}"');
+          action: 'ring',
+          ringDeviceIds: [targets.first],
+          explanation:
+              'Rule "${rule.name}": sequential ring, first device "${targets.first}"',
+        );
       case RoutingStrategy.ringAll:
       case RoutingStrategy.simultaneous:
       case RoutingStrategy.humanFirst:
@@ -147,17 +175,22 @@ RoutingDecision routeInboundCall({
         if (active.isEmpty) {
           if (rule.strategy == RoutingStrategy.aiOverflow) {
             return RoutingDecision(
-                action: 'ai-agent',
-                explanation: 'Rule "${rule.name}": no humans available -> AI overflow');
+              action: 'ai-agent',
+              explanation:
+                  'Rule "${rule.name}": no humans available -> AI overflow',
+            );
           }
           continue;
         }
         return RoutingDecision(
-            action: 'ring',
-            ringDeviceIds: active.map((d) => d.id).toList(),
-            explanation: 'Rule "${rule.name}": ring all active devices');
+          action: 'ring',
+          ringDeviceIds: active.map((d) => d.id).toList(),
+          explanation: 'Rule "${rule.name}": ring all active devices',
+        );
     }
   }
   return const RoutingDecision(
-      action: 'voicemail', explanation: 'No rule matched -> voicemail fallback');
+    action: 'voicemail',
+    explanation: 'No rule matched -> voicemail fallback',
+  );
 }

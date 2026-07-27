@@ -34,8 +34,11 @@ void main() {
     expect(s.agents.length, 5);
     for (final c in s.contacts) {
       for (final p in c.phones) {
-        expect(RegExp(r'^\+1\d{3}555\d{4}$').hasMatch(p.e164), isTrue,
-            reason: '${p.e164} must be fictional 555 range');
+        expect(
+          RegExp(r'^\+1\d{3}555\d{4}$').hasMatch(p.e164),
+          isTrue,
+          reason: '${p.e164} must be fictional 555 range',
+        );
       }
     }
   });
@@ -47,10 +50,16 @@ void main() {
     final origContacts = repo.state.contacts.length;
     final backupPath = await repo.backup();
     // mutate
-    repo.upsertContact(Contact(
-        id: 'newc', firstName: 'Temp', lastName: 'Rary',
-        createdAt: DateTime.now(), updatedAt: DateTime.now()),
-        op: 'create');
+    repo.upsertContact(
+      Contact(
+        id: 'newc',
+        firstName: 'Temp',
+        lastName: 'Rary',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      op: 'create',
+    );
     expect(repo.state.contacts.length, origContacts + 1);
     await repo.restore(backupPath);
     expect(repo.state.contacts.length, origContacts);
@@ -72,13 +81,25 @@ void main() {
     final repo = AppRepository(MemorySnapshotStore());
     await repo.init();
     final conv = repo.ensureConversation('+12145550777');
-    final msg = Message(id: 'm1', conversationId: conv.id, direction: CallDirection.outbound,
-        body: 'hi', state: MessageState.sending, createdAt: DateTime.now());
+    final msg = Message(
+      id: 'm1',
+      conversationId: conv.id,
+      direction: CallDirection.outbound,
+      body: 'hi',
+      state: MessageState.sending,
+      createdAt: DateTime.now(),
+    );
     repo.addMessage(msg);
     repo.updateMessageState('m1', MessageState.sent);
-    expect(repo.state.messages.firstWhere((m) => m.id == 'm1').state, MessageState.sent);
+    expect(
+      repo.state.messages.firstWhere((m) => m.id == 'm1').state,
+      MessageState.sent,
+    );
     // illegal jump ignored
     repo.updateMessageState('m1', MessageState.draft);
-    expect(repo.state.messages.firstWhere((m) => m.id == 'm1').state, MessageState.sent);
+    expect(
+      repo.state.messages.firstWhere((m) => m.id == 'm1').state,
+      MessageState.sent,
+    );
   });
 }

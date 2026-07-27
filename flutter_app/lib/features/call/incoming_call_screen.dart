@@ -14,7 +14,8 @@ class IncomingCallOverlay extends ConsumerStatefulWidget {
   const IncomingCallOverlay({super.key});
 
   @override
-  ConsumerState<IncomingCallOverlay> createState() => _IncomingCallOverlayState();
+  ConsumerState<IncomingCallOverlay> createState() =>
+      _IncomingCallOverlayState();
 }
 
 class _IncomingCallOverlayState extends ConsumerState<IncomingCallOverlay> {
@@ -24,7 +25,9 @@ class _IncomingCallOverlayState extends ConsumerState<IncomingCallOverlay> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final session = ref.read(callSessionProvider);
       if (session != null) {
-        ref.read(ringSimProvider.notifier).simulateRing(session.snapshot.remoteE164);
+        ref
+            .read(ringSimProvider.notifier)
+            .simulateRing(session.snapshot.remoteE164);
       }
     });
   }
@@ -55,41 +58,63 @@ class _IncomingCallOverlayState extends ConsumerState<IncomingCallOverlay> {
                   radius: 34,
                   backgroundColor: PowerlineColors.raised,
                   child: Icon(
-                    session.contact == null ? Icons.person_off_outlined : Icons.person,
+                    session.contact == null
+                        ? Icons.person_off_outlined
+                        : Icons.person,
                     size: 34,
                   ),
                 ),
                 const SizedBox(height: 10),
                 Text(
                   session.contact?.displayName ?? 'Unknown caller',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-                Text(PhoneNumberUtil.format(session.snapshot.remoteE164),
-                    style: const TextStyle(color: PowerlineColors.textSecondary)),
+                Text(
+                  PhoneNumberUtil.format(session.snapshot.remoteE164),
+                  style: const TextStyle(color: PowerlineColors.textSecondary),
+                ),
                 if (number != null)
-                  Text('to ${number.label} ${PhoneNumberUtil.format(number.e164)} · ring group: Sales',
-                      style: const TextStyle(
-                          fontSize: 11, color: PowerlineColors.textSecondary)),
+                  Text(
+                    'to ${number.label} ${PhoneNumberUtil.format(number.e164)} · ring group: Sales',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: PowerlineColors.textSecondary,
+                    ),
+                  ),
                 const SizedBox(height: 12),
                 if (ringEvents.isNotEmpty) ...[
                   const Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('Multi-device ring (simulated):',
-                        style: TextStyle(fontSize: 11, color: PowerlineColors.textSecondary)),
+                    child: Text(
+                      'Multi-device ring (simulated):',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: PowerlineColors.textSecondary,
+                      ),
+                    ),
                   ),
                   for (final e in ringEvents)
-                    Row(children: [
-                      Icon(
-                        e.status == 'ringing' ? Icons.ring_volume : Icons.smartphone,
-                        size: 12,
-                        color: e.status == 'ringing'
-                            ? PowerlineColors.stateRinging
-                            : PowerlineColors.textSecondary,
-                      ),
-                      const SizedBox(width: 6),
-                      Text('${e.deviceName}: ${e.status}',
-                          style: const TextStyle(fontSize: 11)),
-                    ]),
+                    Row(
+                      children: [
+                        Icon(
+                          e.status == 'ringing'
+                              ? Icons.ring_volume
+                              : Icons.smartphone,
+                          size: 12,
+                          color: e.status == 'ringing'
+                              ? PowerlineColors.stateRinging
+                              : PowerlineColors.textSecondary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${e.deviceName}: ${e.status}',
+                          style: const TextStyle(fontSize: 11),
+                        ),
+                      ],
+                    ),
                 ],
                 const SizedBox(height: 18),
                 Row(
@@ -138,22 +163,33 @@ class _RoundBtn extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  const _RoundBtn({required this.color, required this.icon, required this.label, required this.onTap});
+  const _RoundBtn({
+    required this.color,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Column(mainAxisSize: MainAxisSize.min, children: [
-      Material(
-        color: color,
-        shape: const CircleBorder(),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onTap,
-          child: Padding(padding: const EdgeInsets.all(16), child: Icon(icon, size: 24)),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Material(
+          color: color,
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Icon(icon, size: 24),
+            ),
+          ),
         ),
-      ),
-      const SizedBox(height: 6),
-      Text(label, style: const TextStyle(fontSize: 12)),
-    ]);
+        const SizedBox(height: 6),
+        Text(label, style: const TextStyle(fontSize: 12)),
+      ],
+    );
   }
 }

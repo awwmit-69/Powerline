@@ -36,7 +36,13 @@ class HandoffTransition {
   final HandoffState to;
   final DateTime at;
   final String reason;
-  const HandoffTransition(this.from, this.trigger, this.to, this.at, this.reason);
+  const HandoffTransition(
+    this.from,
+    this.trigger,
+    this.to,
+    this.at,
+    this.reason,
+  );
 }
 
 class HandoffMachine {
@@ -44,7 +50,8 @@ class HandoffMachine {
   final List<HandoffTransition> history = [];
   String whisperSummary = '';
 
-  HandoffMachine({HandoffState initial = HandoffState.humanActive}) : _state = initial;
+  HandoffMachine({HandoffState initial = HandoffState.humanActive})
+    : _state = initial;
 
   HandoffState get state => _state;
 

@@ -35,12 +35,15 @@ class AppShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(callSessionProvider);
     final wide = MediaQuery.of(context).size.width >= 900;
-    final index = _navItems.indexWhere((i) => location.startsWith(i.$1)).clamp(0, 9);
+    final index = _navItems
+        .indexWhere((i) => location.startsWith(i.$1))
+        .clamp(0, 9);
 
     final body = Stack(
       children: [
         child,
-        if (session != null && session.snapshot.direction == CallDirection.inbound &&
+        if (session != null &&
+            session.snapshot.direction == CallDirection.inbound &&
             session.snapshot.state == CallState.ringing)
           const IncomingCallOverlay(),
         if (session != null &&
@@ -148,26 +151,42 @@ class _NavTile extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
-  const _NavTile({required this.icon, required this.label, required this.selected, required this.onTap});
+  const _NavTile({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? PowerlineColors.cobaltDeep.withValues(alpha: 0.18) : Colors.transparent,
+      color: selected
+          ? PowerlineColors.cobaltDeep.withValues(alpha: 0.18)
+          : Colors.transparent,
       child: InkWell(
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Row(
             children: [
-              Icon(icon,
-                  size: 18,
-                  color: selected ? PowerlineColors.cobalt : PowerlineColors.textSecondary),
+              Icon(
+                icon,
+                size: 18,
+                color: selected
+                    ? PowerlineColors.cobalt
+                    : PowerlineColors.textSecondary,
+              ),
               const SizedBox(width: 12),
-              Text(label,
-                  style: TextStyle(
-                      color: selected ? PowerlineColors.textPrimary : PowerlineColors.textSecondary,
-                      fontWeight: selected ? FontWeight.w600 : FontWeight.w400)),
+              Text(
+                label,
+                style: TextStyle(
+                  color: selected
+                      ? PowerlineColors.textPrimary
+                      : PowerlineColors.textSecondary,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
             ],
           ),
         ),

@@ -28,7 +28,8 @@ class DemoVoicemailProvider implements VoicemailProvider {
   @override
   String get providerId => 'demo-voicemail';
   @override
-  Future<String> fetchAudioRef(String voicemailId) async => 'assets/audio/demo_voicemail.wav';
+  Future<String> fetchAudioRef(String voicemailId) async =>
+      'assets/audio/demo_voicemail.wav';
 }
 
 /// Deterministic: same audioRef always yields the same transcript, so tests
@@ -47,7 +48,10 @@ class DemoTranscriptionProvider implements TranscriptionProvider {
   @override
   Future<TranscriptionResult> transcribe(String audioRef) async {
     final idx = audioRef.codeUnits.fold<int>(0, (a, b) => a + b) % _bank.length;
-    return TranscriptionResult('${_bank[idx]} [Simulated transcript]', 0.9 + (idx * 0.02));
+    return TranscriptionResult(
+      '${_bank[idx]} [Simulated transcript]',
+      0.9 + (idx * 0.02),
+    );
   }
 }
 

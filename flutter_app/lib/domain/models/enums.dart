@@ -14,23 +14,23 @@ enum CallState {
   failed,
   busy,
   noAnswer,
-  voicemail
+  voicemail,
 }
 
 extension CallStateX on CallState {
   bool get isTerminal => const {
-        CallState.completed,
-        CallState.failed,
-        CallState.busy,
-        CallState.noAnswer,
-        CallState.voicemail
-      }.contains(this);
+    CallState.completed,
+    CallState.failed,
+    CallState.busy,
+    CallState.noAnswer,
+    CallState.voicemail,
+  }.contains(this);
 
   bool get isLive => const {
-        CallState.connected,
-        CallState.onHold,
-        CallState.transferring
-      }.contains(this);
+    CallState.connected,
+    CallState.onHold,
+    CallState.transferring,
+  }.contains(this);
 }
 
 /// Legal call-state transitions for the demo engine. Guarded so UI bugs cannot
@@ -44,16 +44,20 @@ const Map<CallState, Set<CallState>> callStateTransitions = {
     CallState.voicemail,
     CallState.failed,
     CallState.busy,
-    CallState.completed
+    CallState.completed,
   },
   CallState.connected: {
     CallState.onHold,
     CallState.transferring,
     CallState.completed,
-    CallState.failed
+    CallState.failed,
   },
   CallState.onHold: {CallState.connected, CallState.completed},
-  CallState.transferring: {CallState.connected, CallState.completed, CallState.failed},
+  CallState.transferring: {
+    CallState.connected,
+    CallState.completed,
+    CallState.failed,
+  },
   CallState.completed: {},
   CallState.failed: {},
   CallState.busy: {},
@@ -73,12 +77,16 @@ enum MessageState {
   failed,
   received,
   read,
-  suppressed
+  suppressed,
 }
 
 const Map<MessageState, Set<MessageState>> messageStateTransitions = {
   MessageState.draft: {MessageState.queued, MessageState.suppressed},
-  MessageState.queued: {MessageState.sending, MessageState.failed, MessageState.suppressed},
+  MessageState.queued: {
+    MessageState.sending,
+    MessageState.failed,
+    MessageState.suppressed,
+  },
   MessageState.sending: {MessageState.sent, MessageState.failed},
   MessageState.sent: {MessageState.delivered, MessageState.failed},
   MessageState.delivered: {},
@@ -102,7 +110,7 @@ enum PipelineStage {
   won,
   lost,
   dnc,
-  suppressed
+  suppressed,
 }
 
 enum AgentKind { human, ai }
@@ -113,7 +121,14 @@ enum DeviceType { windowsDesktop, macDesktop, androidPhone, iphone, webSession }
 
 enum CampaignStatus { draft, active, paused, completed, archived }
 
-enum AppointmentStatus { scheduled, confirmed, completed, missed, cancelled, rescheduled }
+enum AppointmentStatus {
+  scheduled,
+  confirmed,
+  completed,
+  missed,
+  cancelled,
+  rescheduled,
+}
 
 enum HandoffKind {
   humanToAi,
@@ -121,5 +136,5 @@ enum HandoffKind {
   aiEscalation,
   supervisorTakeover,
   warmHandoff,
-  coldTransfer
+  coldTransfer,
 }

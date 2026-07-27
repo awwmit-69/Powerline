@@ -18,20 +18,27 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/home',
     routes: [
       ShellRoute(
-        builder: (context, state, child) => AppShell(
-          location: state.uri.path,
-          child: child,
-        ),
+        builder: (context, state, child) =>
+            AppShell(location: state.uri.path, child: child),
         routes: [
           GoRoute(path: '/home', builder: (c, s) => const HomeScreen()),
           GoRoute(path: '/dialpad', builder: (c, s) => const DialpadScreen()),
           GoRoute(path: '/messages', builder: (c, s) => const MessagesScreen()),
           GoRoute(path: '/calls', builder: (c, s) => const CallsScreen()),
-          GoRoute(path: '/voicemail', builder: (c, s) => const VoicemailScreen()),
+          GoRoute(
+            path: '/voicemail',
+            builder: (c, s) => const VoicemailScreen(),
+          ),
           GoRoute(path: '/contacts', builder: (c, s) => const ContactsScreen()),
-          GoRoute(path: '/campaigns', builder: (c, s) => const CampaignsScreen()),
+          GoRoute(
+            path: '/campaigns',
+            builder: (c, s) => const CampaignsScreen(),
+          ),
           GoRoute(path: '/agents', builder: (c, s) => const AgentsScreen()),
-          GoRoute(path: '/analytics', builder: (c, s) => const AnalyticsScreen()),
+          GoRoute(
+            path: '/analytics',
+            builder: (c, s) => const AnalyticsScreen(),
+          ),
           GoRoute(path: '/settings', builder: (c, s) => const SettingsScreen()),
         ],
       ),

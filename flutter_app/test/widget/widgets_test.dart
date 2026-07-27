@@ -16,19 +16,26 @@ import 'package:powerline/features/integrations/integrations_panel.dart';
 Future<ProviderContainer> _seededContainer() async {
   final repo = AppRepository(MemorySnapshotStore());
   await repo.init();
-  return ProviderContainer(overrides: [
-    appRepositoryProvider.overrideWithValue(repo),
-    snapshotStoreProvider.overrideWithValue(MemorySnapshotStore()),
-  ]);
+  return ProviderContainer(
+    overrides: [
+      appRepositoryProvider.overrideWithValue(repo),
+      snapshotStoreProvider.overrideWithValue(MemorySnapshotStore()),
+    ],
+  );
 }
 
 Widget _wrap(ProviderContainer c, Widget child) => UncontrolledProviderScope(
-      container: c,
-      child: MaterialApp(theme: powerlineTheme(), home: Scaffold(body: child)),
-    );
+  container: c,
+  child: MaterialApp(
+    theme: powerlineTheme(),
+    home: Scaffold(body: child),
+  ),
+);
 
 void main() {
-  testWidgets('Dialpad renders keys, formats input, shows Demo badge', (tester) async {
+  testWidgets('Dialpad renders keys, formats input, shows Demo badge', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1400, 1000);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);

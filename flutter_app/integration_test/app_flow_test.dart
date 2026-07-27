@@ -30,21 +30,42 @@ void main() {
   });
 
   test('1. create a contact', () {
-    repo.upsertContact(Contact(id: 'c_new', firstName: 'Test', lastName: 'Lead',
+    repo.upsertContact(
+      Contact(
+        id: 'c_new',
+        firstName: 'Test',
+        lastName: 'Lead',
         phones: const [PhoneEntry(label: 'mobile', e164: '+12145559001')],
-        createdAt: DateTime.now(), updatedAt: DateTime.now()), op: 'create');
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      op: 'create',
+    );
     expect(repo.state.contacts.any((c) => c.id == 'c_new'), isTrue);
   });
 
   test('2-3. place a demo call and save it', () async {
-    final engine = DemoCallEngine(tick: const Duration(milliseconds: 1))..scriptedOutcome = 'connected';
+    final engine = DemoCallEngine(tick: const Duration(milliseconds: 1))
+      ..scriptedOutcome = 'connected';
     final id = await engine.placeCall('+12145559002');
     await Future<void>.delayed(const Duration(milliseconds: 40));
-    final snap = await engine.callStates.first.timeout(const Duration(milliseconds: 50), onTimeout: () =>
-        throw StateError('no state')).catchError((_) => null as dynamic);
-    repo.addCall(CallRecord(id: id, direction: CallDirection.outbound,
-        remoteE164: '+12145559002', startedAt: DateTime.now(),
-        answeredAt: DateTime.now(), durationSeconds: 30, disposition: 'contacted'));
+    final snap = await engine.callStates.first
+        .timeout(
+          const Duration(milliseconds: 50),
+          onTimeout: () => throw StateError('no state'),
+        )
+        .catchError((_) => null as dynamic);
+    repo.addCall(
+      CallRecord(
+        id: id,
+        direction: CallDirection.outbound,
+        remoteE164: '+12145559002',
+        startedAt: DateTime.now(),
+        answeredAt: DateTime.now(),
+        durationSeconds: 30,
+        disposition: 'contacted',
+      ),
+    );
     expect(repo.state.calls.any((c) => c.id == id), isTrue);
     await engine.dispose();
   });
@@ -52,9 +73,16 @@ void main() {
   test('4-5. receive simulated inbound call and miss it', () async {
     final engine = DemoCallEngine(tick: const Duration(milliseconds: 1));
     final id = engine.simulateInbound('+13145559003');
-    repo.addCall(CallRecord(id: id, direction: CallDirection.inbound,
-        remoteE164: '+13145559003', startedAt: DateTime.now(),
-        finalState: CallState.voicemail, disposition: 'missed'));
+    repo.addCall(
+      CallRecord(
+        id: id,
+        direction: CallDirection.inbound,
+        remoteE164: '+13145559003',
+        startedAt: DateTime.now(),
+        finalState: CallState.voicemail,
+        disposition: 'missed',
+      ),
+    );
     final rec = repo.state.calls.firstWhere((c) => c.id == id);
     expect(rec.missed, isTrue);
     await engine.dispose();
@@ -63,9 +91,16 @@ void main() {
   test('6-7. generate voicemail, then transcribe it', () async {
     final tp = DemoTranscriptionProvider();
     final r = await tp.transcribe('assets/audio/demo_voicemail.wav#vm1');
-    repo.addVoicemail(Voicemail(id: 'vm_new', remoteE164: '+13145559003',
-        durationSeconds: 20, transcript: r.text, transcriptConfidence: r.confidence,
-        createdAt: DateTime.now()));
+    repo.addVoicemail(
+      Voicemail(
+        id: 'vm_new',
+        remoteE164: '+13145559003',
+        durationSeconds: 20,
+        transcript: r.text,
+        transcriptConfidence: r.confidence,
+        createdAt: DateTime.now(),
+      ),
+    );
     expect(repo.state.voicemails.any((v) => v.id == 'vm_new'), isTrue);
     expect(r.text.toLowerCase(), contains('simulated'));
     expect(r.confidence, greaterThan(0.5));
@@ -73,14 +108,28 @@ void main() {
 
   test('8-9. send a demo message and receive a simulated reply', () async {
     final conv = repo.ensureConversation('+12145559008');
-    final provider = DemoMessagingProvider(tick: const Duration(milliseconds: 1));
+    final provider = DemoMessagingProvider(
+      tick: const Duration(milliseconds: 1),
+    );
     final got = <MessagingEvent>[];
     final sub = provider.events.listen(got.add);
-    repo.addMessage(Message(id: 'out1', conversationId: conv.id,
-        direction: CallDirection.outbound, body: 'appointment?',
-        state: MessageState.sending, createdAt: DateTime.now()));
-    await provider.sendSms(OutboundMessageRequest(
-        to: '+12145559008', from: '+12145550100', body: 'appointment?'));
+    repo.addMessage(
+      Message(
+        id: 'out1',
+        conversationId: conv.id,
+        direction: CallDirection.outbound,
+        body: 'appointment?',
+        state: MessageState.sending,
+        createdAt: DateTime.now(),
+      ),
+    );
+    await provider.sendSms(
+      OutboundMessageRequest(
+        to: '+12145559008',
+        from: '+12145550100',
+        body: 'appointment?',
+      ),
+    );
     await Future<void>.delayed(const Duration(milliseconds: 30));
     expect(got.any((e) => e.kind == 'delivery'), isTrue);
     expect(got.any((e) => e.kind == 'inbound'), isTrue);
@@ -92,39 +141,81 @@ void main() {
     final contact = repo.state.contacts.first;
     final phone = contact.phones.first.e164;
     repo.addDnc(phone, reason: 'integration test');
-    final campaign = Campaign(id: 'camp_it', name: 'IT', status: CampaignStatus.active,
-        leadContactIds: [contact.id], callingHourStart: 0, callingHourEnd: 24,
-        createdAt: DateTime.now());
-    final queue = buildCampaignQueue(campaign: campaign, allContacts: repo.state.contacts,
-        dncE164s: {for (final d in repo.state.dnc) d.e164}, suppressedE164s: {},
-        activeCallE164s: {}, utcNow: DateTime.now().toUtc());
+    final campaign = Campaign(
+      id: 'camp_it',
+      name: 'IT',
+      status: CampaignStatus.active,
+      leadContactIds: [contact.id],
+      callingHourStart: 0,
+      callingHourEnd: 24,
+      createdAt: DateTime.now(),
+    );
+    final queue = buildCampaignQueue(
+      campaign: campaign,
+      allContacts: repo.state.contacts,
+      dncE164s: {for (final d in repo.state.dnc) d.e164},
+      suppressedE164s: {},
+      activeCallE164s: {},
+      utcNow: DateTime.now().toUtc(),
+    );
     expect(queue.first.eligible, isFalse);
     expect(queue.first.exclusionReason, 'DNC');
   });
 
   test('12. schedule a callback', () {
-    repo.upsertCallback(CallbackTask(id: 'cb_it', contactId: repo.state.contacts.first.id,
-        dueAt: DateTime.now().add(const Duration(hours: 3)), reason: 'requested'));
+    repo.upsertCallback(
+      CallbackTask(
+        id: 'cb_it',
+        contactId: repo.state.contacts.first.id,
+        dueAt: DateTime.now().add(const Duration(hours: 3)),
+        reason: 'requested',
+      ),
+    );
     expect(repo.state.callbacks.any((c) => c.id == 'cb_it'), isTrue);
   });
 
   test('13. schedule an appointment', () {
-    repo.upsertAppointment(Appointment(id: 'ap_it', contactId: repo.state.contacts.first.id,
-        startsAt: DateTime.now().add(const Duration(days: 1))));
+    repo.upsertAppointment(
+      Appointment(
+        id: 'ap_it',
+        contactId: repo.state.contacts.first.id,
+        startsAt: DateTime.now().add(const Duration(days: 1)),
+      ),
+    );
     expect(repo.state.appointments.any((a) => a.id == 'ap_it'), isTrue);
   });
 
   test('14-15. run simulated AI call and escalate to human', () async {
     final sim = AgentSimulator(mockAnthropicLlm());
-    const agent = AiAgent(id: 'ag_it', name: 'IT Agent', greeting: 'hi (simulated)');
+    const agent = AiAgent(
+      id: 'ag_it',
+      name: 'IT Agent',
+      greeting: 'hi (simulated)',
+    );
     final result = await sim.run(agent, SimPersona.wantsHuman);
     expect(result.escalatedToHuman, isTrue);
-    repo.addCall(CallRecord(id: 'cl_ai', direction: CallDirection.inbound,
-        remoteE164: '+15005550199', agentKind: AgentKind.ai, aiAgentId: agent.id,
-        startedAt: DateTime.now(), durationSeconds: 30, disposition: result.outcome));
-    repo.addHandoff(HandoffEvent(id: 'ho_it', callRecordId: 'cl_ai',
-        kind: HandoffKind.aiRequestsHuman, fromParty: 'ai', toParty: 'human',
-        createdAt: DateTime.now()));
+    repo.addCall(
+      CallRecord(
+        id: 'cl_ai',
+        direction: CallDirection.inbound,
+        remoteE164: '+15005550199',
+        agentKind: AgentKind.ai,
+        aiAgentId: agent.id,
+        startedAt: DateTime.now(),
+        durationSeconds: 30,
+        disposition: result.outcome,
+      ),
+    );
+    repo.addHandoff(
+      HandoffEvent(
+        id: 'ho_it',
+        callRecordId: 'cl_ai',
+        kind: HandoffKind.aiRequestsHuman,
+        fromParty: 'ai',
+        toParty: 'human',
+        createdAt: DateTime.now(),
+      ),
+    );
     expect(repo.state.handoffs.any((h) => h.id == 'ho_it'), isTrue);
   });
 
@@ -139,10 +230,22 @@ void main() {
     final decision = routeInboundCall(
       rules: repo.state.routingRules,
       devices: repo.state.devices,
-      hours: BusinessHours(weekly: {for (var d = 1; d <= 7; d++) d: [[0, 24]]}),
+      hours: BusinessHours(
+        weekly: {
+          for (var d = 1; d <= 7; d++)
+            d: [
+              [0, 24],
+            ],
+        },
+      ),
       localNow: DateTime(2026, 1, 1, 12),
     );
-    expect(['ring', 'ai-agent', 'voicemail', 'forward'], contains(decision.action));
+    expect([
+      'ring',
+      'ai-agent',
+      'voicemail',
+      'forward',
+    ], contains(decision.action));
   });
 
   test('18. export call history to CSV text', () {
@@ -150,7 +253,10 @@ void main() {
     for (final c in repo.state.calls) {
       rows.writeln('${c.id},${c.direction.name},${c.remoteE164}');
     }
-    expect(rows.toString().split('\n').length, greaterThan(repo.state.calls.length));
+    expect(
+      rows.toString().split('\n').length,
+      greaterThan(repo.state.calls.length),
+    );
   });
 
   test('19. back up and restore the database', () async {

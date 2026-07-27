@@ -15,38 +15,66 @@ class CsvImportResult {
 
 String contactsToCsv(List<Contact> contacts) {
   final rows = <List<dynamic>>[
-    ['firstName', 'lastName', 'phone', 'email', 'company', 'tags', 'timeZone', 'dnc', 'notes']
+    [
+      'firstName',
+      'lastName',
+      'phone',
+      'email',
+      'company',
+      'tags',
+      'timeZone',
+      'dnc',
+      'notes',
+    ],
   ];
   for (final c in contacts) {
     rows.add([
-      c.firstName, c.lastName, c.primaryPhone ?? '', c.emails.isEmpty ? '' : c.emails.first,
-      c.companyId ?? '', c.tags.join('|'), c.timeZone ?? '', c.dnc ? '1' : '0', c.notes,
+      c.firstName,
+      c.lastName,
+      c.primaryPhone ?? '',
+      c.emails.isEmpty ? '' : c.emails.first,
+      c.companyId ?? '',
+      c.tags.join('|'),
+      c.timeZone ?? '',
+      c.dnc ? '1' : '0',
+      c.notes,
     ]);
   }
   return const ListToCsvConverter().convert(rows);
 }
 
-CsvImportResult contactsFromCsv(String csvText, List<Contact> existing, String Function() idGen) {
+CsvImportResult contactsFromCsv(
+  String csvText,
+  List<Contact> existing,
+  String Function() idGen,
+) {
   final errors = <String>[];
   final imported = <Contact>[];
   var skipped = 0;
-  final rows = const CsvToListConverter(shouldParseNumbers: false).convert(csvText, eol: '\n');
+  final rows = const CsvToListConverter(
+    shouldParseNumbers: false,
+  ).convert(csvText, eol: '\n');
   if (rows.isEmpty) return CsvImportResult(const [], ['empty file'], 0);
 
-  final header = rows.first.map((h) => h.toString().trim().toLowerCase()).toList();
+  final header = rows.first
+      .map((h) => h.toString().trim().toLowerCase())
+      .toList();
   int col(String name) => header.indexOf(name);
   final fi = col('firstname');
   final li = col('lastname');
   final pi = col('phone');
   if (fi < 0 || li < 0) {
-    return CsvImportResult(const [], ['missing required columns firstName/lastName'], 0);
+    return CsvImportResult(const [], [
+      'missing required columns firstName/lastName',
+    ], 0);
   }
 
   final existingKeys = existing.map(dedupeKey).toSet();
   final now = DateTime.now();
   for (var i = 1; i < rows.length; i++) {
     final r = rows[i];
-    String cell(int idx) => (idx >= 0 && idx < r.length) ? r[idx].toString().trim() : '';
+    String cell(int idx) =>
+        (idx >= 0 && idx < r.length) ? r[idx].toString().trim() : '';
     final first = cell(fi);
     final last = cell(li);
     if (first.isEmpty && last.isEmpty) continue;
@@ -63,7 +91,9 @@ CsvImportResult contactsFromCsv(String csvText, List<Contact> existing, String F
       id: idGen(),
       firstName: first,
       lastName: last,
-      phones: phone == null ? const [] : [PhoneEntry(label: 'mobile', e164: phone)],
+      phones: phone == null
+          ? const []
+          : [PhoneEntry(label: 'mobile', e164: phone)],
       emails: cell(col('email')).isEmpty ? const [] : [cell(col('email'))],
       tags: cell(col('tags')).isEmpty ? const [] : cell(col('tags')).split('|'),
       timeZone: cell(col('timezone')).isEmpty ? null : cell(col('timezone')),
@@ -85,7 +115,8 @@ CsvImportResult contactsFromCsv(String csvText, List<Contact> existing, String F
 
 /// Strongest available identifier: phone if present, else name.
 String dedupeKey(Contact c) =>
-    c.primaryPhone ?? '${c.firstName.toLowerCase()}|${c.lastName.toLowerCase()}';
+    c.primaryPhone ??
+    '${c.firstName.toLowerCase()}|${c.lastName.toLowerCase()}';
 
 /// Finds duplicate groups among existing contacts (same dedupe key).
 List<List<Contact>> findDuplicates(List<Contact> contacts) {
@@ -109,7 +140,8 @@ Contact mergeContacts(List<Contact> group) {
     }
     emails.addAll(c.emails);
     tags.addAll(c.tags);
-    if (c.notes.isNotEmpty) notes = notes.isEmpty ? c.notes : '$notes\n${c.notes}';
+    if (c.notes.isNotEmpty)
+      notes = notes.isEmpty ? c.notes : '$notes\n${c.notes}';
   }
   return base.copyWith(
     phones: phones.values.toList(),

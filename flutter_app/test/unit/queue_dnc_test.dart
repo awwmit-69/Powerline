@@ -4,15 +4,21 @@ import 'package:powerline/domain/models/enums.dart';
 import 'package:powerline/domain/models/models.dart';
 import 'package:powerline/domain/models/models2.dart';
 
-Contact c(String id, String phone, {bool dnc = false, String tz = 'America/Chicago'}) => Contact(
-    id: id,
-    firstName: 'F$id',
-    lastName: 'L$id',
-    phones: [PhoneEntry(label: 'mobile', e164: phone)],
-    timeZone: tz,
-    dnc: dnc,
-    createdAt: DateTime(2026),
-    updatedAt: DateTime(2026));
+Contact c(
+  String id,
+  String phone, {
+  bool dnc = false,
+  String tz = 'America/Chicago',
+}) => Contact(
+  id: id,
+  firstName: 'F$id',
+  lastName: 'L$id',
+  phones: [PhoneEntry(label: 'mobile', e164: phone)],
+  timeZone: tz,
+  dnc: dnc,
+  createdAt: DateTime(2026),
+  updatedAt: DateTime(2026),
+);
 
 void main() {
   final contacts = [
@@ -66,8 +72,14 @@ void main() {
       activeCallE164s: {'+12145550104'},
       utcNow: DateTime.utc(2026, 1, 1, 18),
     );
-    expect(q.firstWhere((e) => e.contact.id == '1').exclusionReason, 'suppressed');
-    expect(q.firstWhere((e) => e.contact.id == '4').exclusionReason, 'already in an active call');
+    expect(
+      q.firstWhere((e) => e.contact.id == '1').exclusionReason,
+      'suppressed',
+    );
+    expect(
+      q.firstWhere((e) => e.contact.id == '4').exclusionReason,
+      'already in an active call',
+    );
   });
 
   test('paused campaign excludes everyone with reason', () {

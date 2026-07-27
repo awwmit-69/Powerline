@@ -5,14 +5,32 @@ import 'package:powerline/engines/handoff/handoff_machine.dart';
 void main() {
   group('call-state transitions', () {
     test('legal path preparing->dialing->ringing->connected->completed', () {
-      expect(isLegalCallTransition(CallState.preparing, CallState.dialing), isTrue);
-      expect(isLegalCallTransition(CallState.dialing, CallState.ringing), isTrue);
-      expect(isLegalCallTransition(CallState.ringing, CallState.connected), isTrue);
-      expect(isLegalCallTransition(CallState.connected, CallState.completed), isTrue);
+      expect(
+        isLegalCallTransition(CallState.preparing, CallState.dialing),
+        isTrue,
+      );
+      expect(
+        isLegalCallTransition(CallState.dialing, CallState.ringing),
+        isTrue,
+      );
+      expect(
+        isLegalCallTransition(CallState.ringing, CallState.connected),
+        isTrue,
+      );
+      expect(
+        isLegalCallTransition(CallState.connected, CallState.completed),
+        isTrue,
+      );
     });
     test('illegal jumps rejected', () {
-      expect(isLegalCallTransition(CallState.preparing, CallState.connected), isFalse);
-      expect(isLegalCallTransition(CallState.completed, CallState.connected), isFalse);
+      expect(
+        isLegalCallTransition(CallState.preparing, CallState.connected),
+        isFalse,
+      );
+      expect(
+        isLegalCallTransition(CallState.completed, CallState.connected),
+        isFalse,
+      );
     });
     test('terminal states are terminal', () {
       expect(CallState.completed.isTerminal, isTrue);
@@ -22,16 +40,34 @@ void main() {
 
   group('message-state transitions', () {
     test('draft->queued->sending->sent->delivered legal', () {
-      expect(isLegalMessageTransition(MessageState.draft, MessageState.queued), isTrue);
-      expect(isLegalMessageTransition(MessageState.queued, MessageState.sending), isTrue);
-      expect(isLegalMessageTransition(MessageState.sending, MessageState.sent), isTrue);
-      expect(isLegalMessageTransition(MessageState.sent, MessageState.delivered), isTrue);
+      expect(
+        isLegalMessageTransition(MessageState.draft, MessageState.queued),
+        isTrue,
+      );
+      expect(
+        isLegalMessageTransition(MessageState.queued, MessageState.sending),
+        isTrue,
+      );
+      expect(
+        isLegalMessageTransition(MessageState.sending, MessageState.sent),
+        isTrue,
+      );
+      expect(
+        isLegalMessageTransition(MessageState.sent, MessageState.delivered),
+        isTrue,
+      );
     });
     test('failed can retry to queued', () {
-      expect(isLegalMessageTransition(MessageState.failed, MessageState.queued), isTrue);
+      expect(
+        isLegalMessageTransition(MessageState.failed, MessageState.queued),
+        isTrue,
+      );
     });
     test('delivered is terminal', () {
-      expect(isLegalMessageTransition(MessageState.delivered, MessageState.sent), isFalse);
+      expect(
+        isLegalMessageTransition(MessageState.delivered, MessageState.sent),
+        isFalse,
+      );
     });
   });
 

@@ -12,8 +12,10 @@ Future<void> main() async {
   } catch (_) {
     // Non-fatal: continue to render even if persistence is unavailable (e.g. web).
   }
-  runApp(UncontrolledProviderScope(
-    container: container,
-    child: const PowerlineApp(),
-  ));
+  runApp(
+    UncontrolledProviderScope(
+      container: container,
+      child: const PowerlineApp(),
+    ),
+  );
 }
