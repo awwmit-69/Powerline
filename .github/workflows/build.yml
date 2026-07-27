@@ -96,7 +96,10 @@ jobs:
         run: flutter config --enable-windows-desktop
       - name: Complete Windows runner
         working-directory: flutter_app
-        run: flutter create --platforms=windows .
+        shell: pwsh
+        run: |
+          Remove-Item -Recurse -Force windows
+          flutter create --platforms=windows .
       - name: Install dependencies
         working-directory: flutter_app
         run: flutter pub get
