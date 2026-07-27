@@ -52,5 +52,5 @@ class PhoneNumberUtil {
 
   /// True when the number sits in a clearly-fictional demo range (555-01xx style).
   static bool isFictionalDemoNumber(String e164) =>
-      RegExp(r'^\+1\d{3}555\d{4}$').hasMatch(e164);
+      RegExp(r'^\+1\d{3}55501\d{2}$').hasMatch(e164);
 }
