@@ -1,0 +1,9 @@
+{
+  "name": "Powerline",
+  "short_name": "Powerline",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#15171A",
+  "theme_color": "#9E1B32",
+  "description": "Powerline cloud communications (demo mode)."
+}
