@@ -7,8 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/theme.dart';
 import '../../core/util/phone.dart';
-import '../../domain/models/enums.dart';
-import '../../domain/models/models.dart';
 import '../../providers.dart';
 import '../devices/devices_panel.dart';
 import '../integrations/integrations_panel.dart';

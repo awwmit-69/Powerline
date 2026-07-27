@@ -285,13 +285,14 @@ class _AgentsScreenState extends ConsumerState<AgentsScreen> {
             ],
           );
 
-    if (!wide)
+    if (!wide) {
       return ListView(
         children: [
           SizedBox(height: 400, child: list),
           detail,
         ],
       );
+    }
     return Row(
       children: [
         SizedBox(

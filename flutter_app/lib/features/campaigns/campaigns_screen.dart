@@ -460,7 +460,7 @@ class _CampaignsScreenState extends ConsumerState<CampaignsScreen> {
 
   String _name(AppState s, String? contactId) {
     final m = s.contacts.where((c) => c.id == contactId);
-    return m.isEmpty ? 'Unknown' : m.first.displayName as String;
+    return m.isEmpty ? 'Unknown' : m.first.displayName;
   }
 }
 

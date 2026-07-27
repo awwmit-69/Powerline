@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/theme.dart';
 import '../../domain/models/enums.dart';
-import '../../domain/models/models2.dart';
 import '../../providers.dart';
 
 class DevicesPanel extends ConsumerWidget {

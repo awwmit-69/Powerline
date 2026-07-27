@@ -107,8 +107,9 @@ class AgentSimulator {
   String _intent(String line) {
     final l = line.toLowerCase();
     if (l.contains('human') || l.contains('person')) return 'request-human';
-    if (l.contains('cost') || l.contains('much') || l.contains('price'))
+    if (l.contains('cost') || l.contains('much') || l.contains('price')) {
       return 'pricing-question';
+    }
     if (l.contains('not interested') || l.contains('remove')) return 'opt-out';
     if (l.contains('yes') || l.contains('works')) return 'affirmative';
     return 'general';

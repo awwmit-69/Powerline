@@ -235,7 +235,7 @@ class _Column extends StatelessWidget {
 class _Panel extends StatelessWidget {
   final Widget child;
   final EdgeInsets padding;
-  const _Panel({required this.child, this.padding = const EdgeInsets.all(16)});
+  const _Panel({required this.child}) : padding = const EdgeInsets.all(16);
   @override
   Widget build(BuildContext context) => Container(
         padding: padding,

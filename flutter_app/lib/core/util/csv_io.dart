@@ -138,8 +138,9 @@ Contact mergeContacts(List<Contact> group) {
     }
     emails.addAll(c.emails);
     tags.addAll(c.tags);
-    if (c.notes.isNotEmpty)
+    if (c.notes.isNotEmpty) {
       notes = notes.isEmpty ? c.notes : '$notes\n${c.notes}';
+    }
   }
   return base.copyWith(
     phones: phones.values.toList(),

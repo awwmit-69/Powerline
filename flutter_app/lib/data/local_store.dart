@@ -59,8 +59,9 @@ class FileSnapshotStore implements SnapshotStore {
   @override
   Future<void> restoreFrom(String path) async {
     final src = File(path);
-    if (!await src.exists())
+    if (!await src.exists()) {
       throw const FileSystemException('backup not found');
+    }
     // Validate JSON before overwriting.
     jsonDecode(await src.readAsString());
     final f = await _file();
@@ -89,8 +90,9 @@ class MemorySnapshotStore implements SnapshotStore {
 
   @override
   Future<String> backupTo(String suffix) async {
-    if (_snap != null)
+    if (_snap != null) {
       backups[suffix] = jsonDecode(jsonEncode(_snap)) as Map<String, dynamic>;
+    }
     return 'memory://$suffix';
   }
 
