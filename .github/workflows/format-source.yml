@@ -20,7 +20,10 @@ jobs:
         with:
           channel: stable
           cache: true
-      - name: Format and commit every tracked Dart file
+      - name: Install dependencies
+        working-directory: flutter_app
+        run: flutter pub get
+      - name: Format every tracked Dart file
         working-directory: flutter_app
         run: dart format lib test integration_test
       - name: Commit all formatter output
