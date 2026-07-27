@@ -49,7 +49,7 @@ void main() {
       ..scriptedOutcome = 'connected';
     final id = await engine.placeCall('+12145559002');
     await Future<void>.delayed(const Duration(milliseconds: 40));
-    final snap = await engine.callStates.first
+    await engine.callStates.first
         .timeout(
           const Duration(milliseconds: 50),
           onTimeout: () => throw StateError('no state'),
