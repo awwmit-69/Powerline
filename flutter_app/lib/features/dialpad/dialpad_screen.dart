@@ -182,10 +182,10 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                       ],
                     ),
                   const SizedBox(height: 10),
-                  Row(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
+                      DropdownButtonFormField<String>(
                           initialValue: callerIdNumberId,
                           decoration: const InputDecoration(
                             labelText: 'Caller ID (outbound number)',
@@ -201,11 +201,10 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                                 ),
                               ),
                           ],
-                          onChanged: (v) =>
-                              setState(() => callerIdNumberId = v),
-                        ),
+                        onChanged: (v) =>
+                            setState(() => callerIdNumberId = v),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(height: 8),
                       SegmentedButton<String>(
                         segments: const [
                           ButtonSegment(value: 'demo', label: Text('Demo')),
@@ -221,8 +220,10 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 10,
+                    runSpacing: 8,
                     children: [
                       FilledButton.icon(
                         style: FilledButton.styleFrom(
@@ -234,7 +235,6 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                         icon: const Icon(Icons.call),
                         label: Text(mode == 'demo' ? 'Demo call' : 'OS dialer'),
                       ),
-                      const SizedBox(width: 10),
                       OutlinedButton.icon(
                         onPressed: normalized == null
                             ? null
@@ -247,7 +247,6 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                         icon: const Icon(Icons.message_outlined, size: 16),
                         label: const Text('Message'),
                       ),
-                      const SizedBox(width: 10),
                       IconButton(
                         tooltip: 'Copy number',
                         onPressed: normalized == null
