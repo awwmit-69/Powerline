@@ -68,7 +68,6 @@ void main() {
   test('DNC enforcement via repository', () async {
     final repo = AppRepository(MemorySnapshotStore());
     await repo.init();
-    final phone = repo.state.contacts.first.phones.first.e164;
     expect(repo.isDnc('+19995550000'), isFalse);
     repo.addDnc('+19995550000', reason: 'test');
     expect(repo.isDnc('+19995550000'), isTrue);
