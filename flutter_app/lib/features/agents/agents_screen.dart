@@ -36,13 +36,15 @@ class _AgentsScreenState extends ConsumerState<AgentsScreen> {
     final list = ListView(
       padding: const EdgeInsets.all(12),
       children: [
-        const Row(
+        const Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Text(
               'AI Agents',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
-            SizedBox(width: 8),
             DemoBadge(label: 'TEST MODE — never calls real numbers'),
           ],
         ),
