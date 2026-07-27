@@ -186,6 +186,7 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       DropdownButtonFormField<String>(
+                        isExpanded: true,
                         initialValue: callerIdNumberId,
                         decoration: const InputDecoration(
                           labelText: 'Caller ID (outbound number)',
