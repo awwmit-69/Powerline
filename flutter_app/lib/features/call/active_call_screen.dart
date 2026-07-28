@@ -1,5 +1,5 @@
 /// Active call overlay: call controls, notes, script, handoff, disposition.
-/// Always labelled "Demo call" — no real audio path exists.
+/// Supports both the local demo engine and live Twilio browser calls.
 library;
 
 import 'package:flutter/material.dart';
@@ -41,6 +41,7 @@ class _ActiveCallOverlayState extends ConsumerState<ActiveCallOverlay> {
     final session = ref.watch(callSessionProvider);
     if (session == null) return const SizedBox.shrink();
     final snap = session.snapshot;
+    final isLive = session.providerId == 'twilio';
     final ctrl = ref.read(callSessionProvider.notifier);
     final s = stateOf(ref);
     final campaign = session.campaignId == null
@@ -76,7 +77,14 @@ class _ActiveCallOverlayState extends ConsumerState<ActiveCallOverlay> {
               children: [
                 Row(
                   children: [
-                    const DemoBadge(label: 'DEMO CALL'),
+                    if (isLive)
+                      const Chip(
+                        avatar: Icon(Icons.cloud_done, size: 14),
+                        label: Text('TWILIO LIVE'),
+                        visualDensity: VisualDensity.compact,
+                      )
+                    else
+                      const DemoBadge(label: 'DEMO CALL'),
                     const Spacer(),
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -120,7 +128,8 @@ class _ActiveCallOverlayState extends ConsumerState<ActiveCallOverlay> {
                   ),
                 Text(
                   '${snap.direction == CallDirection.inbound ? 'Inbound' : 'Outbound'} · '
-                  'via ${s.numbers.firstOrNull?.label ?? 'demo number'} · provider: Demo',
+                  'via ${isLive ? '+1 605-205-8454' : (s.numbers.firstOrNull?.label ?? 'demo number')} · '
+                  'provider: ${isLive ? 'Twilio Voice' : 'Demo'}',
                   style: const TextStyle(
                     fontSize: 11,
                     color: PowerlineColors.textSecondary,
@@ -136,9 +145,11 @@ class _ActiveCallOverlayState extends ConsumerState<ActiveCallOverlay> {
                       color: PowerlineColors.textSecondary,
                     ),
                     const SizedBox(width: 4),
-                    const Text(
-                      'Quality: n/a (simulated)',
-                      style: TextStyle(
+                    Text(
+                      isLive
+                          ? 'Live encrypted browser audio'
+                          : 'Quality: n/a (simulated)',
+                      style: const TextStyle(
                         fontSize: 11,
                         color: PowerlineColors.textSecondary,
                       ),
@@ -170,7 +181,11 @@ class _ActiveCallOverlayState extends ConsumerState<ActiveCallOverlay> {
                       icon: snap.onHold ? Icons.play_arrow : Icons.pause,
                       label: snap.onHold ? 'Resume' : 'Hold',
                       active: snap.onHold,
-                      onTap: () => snap.onHold ? ctrl.resume() : ctrl.hold(),
+                      onTap: isLive
+                          ? null
+                          : () => snap.onHold ? ctrl.resume() : ctrl.hold(),
+                      disabledNote:
+                          isLive ? 'not enabled on trial' : null,
                     ),
                     _Ctl(
                       icon: Icons.dialpad,
@@ -186,7 +201,11 @@ class _ActiveCallOverlayState extends ConsumerState<ActiveCallOverlay> {
                     _Ctl(
                       icon: Icons.phone_forwarded,
                       label: 'Transfer',
-                      onTap: () => ctrl.transfer('ring-group:sales'),
+                      onTap: isLive
+                          ? null
+                          : () => ctrl.transfer('ring-group:sales'),
+                      disabledNote:
+                          isLive ? 'not enabled on trial' : null,
                     ),
                     const _Ctl(
                       icon: Icons.group_add,
@@ -198,13 +217,17 @@ class _ActiveCallOverlayState extends ConsumerState<ActiveCallOverlay> {
                           ? Icons.stop_circle
                           : Icons.fiber_manual_record,
                       label: snap.recording ? 'Stop rec' : 'Record',
-                      onTap: () => snap.recording
-                          ? ref
-                              .read(demoCallEngineProvider)
-                              .stopRecording(snap.callId)
-                          : ref
-                              .read(demoCallEngineProvider)
-                              .startRecording(snap.callId),
+                      onTap: isLive
+                          ? null
+                          : () => snap.recording
+                              ? ref
+                                  .read(demoCallEngineProvider)
+                                  .stopRecording(snap.callId)
+                              : ref
+                                  .read(demoCallEngineProvider)
+                                  .startRecording(snap.callId),
+                      disabledNote:
+                          isLive ? 'not enabled on trial' : null,
                     ),
                     _Ctl(
                       icon: Icons.smart_toy_outlined,
