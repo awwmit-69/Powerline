@@ -33,7 +33,7 @@ Widget _wrap(ProviderContainer c, Widget child) => UncontrolledProviderScope(
     );
 
 void main() {
-  testWidgets('Dialpad renders keys, formats input, shows Demo badge', (
+  testWidgets('Dialpad renders keys, formats input, shows Twilio badge', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1400, 1000);
@@ -43,7 +43,7 @@ void main() {
     await tester.pumpWidget(_wrap(c, const DialpadScreen()));
     await tester.pumpAndSettle();
     expect(find.text('Dialpad'), findsOneWidget);
-    expect(find.text('DEMO'), findsWidgets);
+    expect(find.text('TWILIO LIVE'), findsWidgets);
     await tester.tap(find.widgetWithText(OutlinedButton, '2'));
     await tester.tap(find.widgetWithText(OutlinedButton, '1'));
     await tester.tap(find.widgetWithText(OutlinedButton, '4'));
