@@ -26,15 +26,14 @@ class _ActiveCallOverlayState extends ConsumerState<ActiveCallOverlay> {
   bool showScript = false;
 
   Color _stateColor(CallState s) => switch (s) {
-        CallState.ringing ||
-        CallState.dialing ||
-        CallState.preparing =>
-          PowerlineColors.stateRinging,
-        CallState.connected => PowerlineColors.stateConnected,
-        CallState.onHold || CallState.transferring => PowerlineColors.stateHold,
-        CallState.voicemail => PowerlineColors.stateVoicemail,
-        _ => PowerlineColors.stateFailed,
-      };
+    CallState.ringing ||
+    CallState.dialing ||
+    CallState.preparing => PowerlineColors.stateRinging,
+    CallState.connected => PowerlineColors.stateConnected,
+    CallState.onHold || CallState.transferring => PowerlineColors.stateHold,
+    CallState.voicemail => PowerlineColors.stateVoicemail,
+    _ => PowerlineColors.stateFailed,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -50,8 +49,8 @@ class _ActiveCallOverlayState extends ConsumerState<ActiveCallOverlay> {
     final company = session.contact?.companyId == null
         ? null
         : s.companies
-            .where((c) => c.id == session.contact!.companyId)
-            .firstOrNull;
+              .where((c) => c.id == session.contact!.companyId)
+              .firstOrNull;
 
     if (snap.state.isTerminal) {
       return _TerminalBar(
@@ -184,8 +183,7 @@ class _ActiveCallOverlayState extends ConsumerState<ActiveCallOverlay> {
                       onTap: isLive
                           ? null
                           : () => snap.onHold ? ctrl.resume() : ctrl.hold(),
-                      disabledNote:
-                          isLive ? 'not enabled on trial' : null,
+                      disabledNote: isLive ? 'not enabled on trial' : null,
                     ),
                     _Ctl(
                       icon: Icons.dialpad,
@@ -204,8 +202,7 @@ class _ActiveCallOverlayState extends ConsumerState<ActiveCallOverlay> {
                       onTap: isLive
                           ? null
                           : () => ctrl.transfer('ring-group:sales'),
-                      disabledNote:
-                          isLive ? 'not enabled on trial' : null,
+                      disabledNote: isLive ? 'not enabled on trial' : null,
                     ),
                     const _Ctl(
                       icon: Icons.group_add,
@@ -220,14 +217,13 @@ class _ActiveCallOverlayState extends ConsumerState<ActiveCallOverlay> {
                       onTap: isLive
                           ? null
                           : () => snap.recording
-                              ? ref
-                                  .read(demoCallEngineProvider)
-                                  .stopRecording(snap.callId)
-                              : ref
-                                  .read(demoCallEngineProvider)
-                                  .startRecording(snap.callId),
-                      disabledNote:
-                          isLive ? 'not enabled on trial' : null,
+                                ? ref
+                                      .read(demoCallEngineProvider)
+                                      .stopRecording(snap.callId)
+                                : ref
+                                      .read(demoCallEngineProvider)
+                                      .startRecording(snap.callId),
+                      disabledNote: isLive ? 'not enabled on trial' : null,
                     ),
                     _Ctl(
                       icon: Icons.smart_toy_outlined,
@@ -349,7 +345,9 @@ class _ActiveCallOverlayState extends ConsumerState<ActiveCallOverlay> {
       reason: 'operator chose AI handoff',
     )) {
       machine.fire(HandoffTrigger.aiTransferComplete);
-      ref.read(callSessionProvider.notifier).recordHandoff(
+      ref
+          .read(callSessionProvider.notifier)
+          .recordHandoff(
             HandoffKind.humanToAi,
             'operator chose AI handoff',
             'human:you',
@@ -466,8 +464,9 @@ class _Ctl extends StatelessWidget {
           onPressed: onTap,
           icon: Icon(icon, size: 18),
           style: IconButton.styleFrom(
-            backgroundColor:
-                active ? PowerlineColors.cobaltDeep : PowerlineColors.raised,
+            backgroundColor: active
+                ? PowerlineColors.cobaltDeep
+                : PowerlineColors.raised,
           ),
         ),
         Text(label, style: const TextStyle(fontSize: 10)),
