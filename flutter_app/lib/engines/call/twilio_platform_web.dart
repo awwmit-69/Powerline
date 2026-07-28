@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: avoid_web_libraries_in_flutter, deprecated_member_use
 
 import 'dart:async';
 import 'dart:js' as js;
@@ -10,17 +10,19 @@ TwilioPlatform createTwilioPlatform() => _WebTwilioPlatform();
 class _WebTwilioPlatform implements TwilioPlatform {
   Future<T> _promise<T>(String function, List<Object?> arguments) {
     final completer = Completer<T>();
-    final promise =
-        js.context.callMethod<Object?>(function, arguments) as js.JsObject;
-    promise.callMethod<Object?>('then', [
-      js.allowInterop((Object? value) {
-        if (!completer.isCompleted) completer.complete(value as T);
+    final promise = js.context.callMethod(function, arguments) as js.JsObject;
+    promise.callMethod('then', [
+      js.JsFunction.withThis((Object? _, Object? value) {
+        if (!completer.isCompleted) {
+          completer.complete(value as T);
+        }
       }),
     ]);
-    promise.callMethod<Object?>('catch', [
-      js.allowInterop((Object? error) {
-        if (!completer.isCompleted)
+    promise.callMethod('catch', [
+      js.JsFunction.withThis((Object? _, Object? error) {
+        if (!completer.isCompleted) {
           completer.completeError(error ?? 'Unknown Twilio error');
+        }
       }),
     ]);
     return completer.future;
@@ -34,8 +36,12 @@ class _WebTwilioPlatform implements TwilioPlatform {
   ) async {
     await _promise<Object?>('powerlineTwilioInitialize', [
       tokenUrl,
-      js.allowInterop(onState),
-      js.allowInterop(onError),
+      js.JsFunction.withThis(
+        (Object? _, String state, String callId) => onState(state, callId),
+      ),
+      js.JsFunction.withThis(
+        (Object? _, String message) => onError(message),
+      ),
     ]);
   }
 
@@ -44,13 +50,13 @@ class _WebTwilioPlatform implements TwilioPlatform {
       _promise<String>('powerlineTwilioPlaceCall', [destination]);
 
   @override
-  void hangup() => js.context.callMethod<void>('powerlineTwilioHangup');
+  void hangup() => js.context.callMethod('powerlineTwilioHangup');
   @override
   void mute(bool muted) =>
-      js.context.callMethod<void>('powerlineTwilioMute', [muted]);
+      js.context.callMethod('powerlineTwilioMute', [muted]);
   @override
   void sendDigits(String digits) =>
-      js.context.callMethod<void>('powerlineTwilioSendDigits', [digits]);
+      js.context.callMethod('powerlineTwilioSendDigits', [digits]);
   @override
-  void dispose() => js.context.callMethod<void>('powerlineTwilioDispose');
+  void dispose() => js.context.callMethod('powerlineTwilioDispose');
 }
