@@ -17,6 +17,7 @@ import 'engines/ai/ai_providers.dart';
 import 'engines/call/call_engine.dart';
 import 'engines/call/demo_call_engine.dart';
 import 'engines/call/mock_engines.dart';
+import 'engines/call/twilio_call_engine.dart';
 import 'engines/handoff/handoff_machine.dart';
 import 'engines/messaging/messaging_provider.dart';
 import 'engines/routing/routing.dart';
@@ -50,9 +51,16 @@ final demoCallEngineProvider = Provider<DemoCallEngine>((ref) {
   return e;
 });
 
+final twilioCallEngineProvider = Provider<TwilioCallEngine>((ref) {
+  final engine = TwilioCallEngine();
+  ref.onDispose(() => engine.dispose());
+  return engine;
+});
+
 final allCallEnginesProvider = Provider<List<CallEngine>>(
   (ref) => [
     ref.watch(demoCallEngineProvider),
+    ref.watch(twilioCallEngineProvider),
     ExternalDialerCallEngine(),
     MockSipCallEngine(),
     MockSignalMashCallEngine(),
@@ -85,12 +93,14 @@ class CallSession {
   final String? campaignId;
   final HandoffMachine handoff;
   final String notes;
+  final String providerId;
   const CallSession({
     required this.snapshot,
     this.contact,
     this.campaignId,
     required this.handoff,
     this.notes = '',
+    this.providerId = 'demo',
   });
 
   CallSession copyWith({ActiveCallSnapshot? snapshot, String? notes}) =>
@@ -100,11 +110,13 @@ class CallSession {
         campaignId: campaignId,
         handoff: handoff,
         notes: notes ?? this.notes,
+        providerId: providerId,
       );
 }
 
 class CallSessionController extends Notifier<CallSession?> {
   StreamSubscription<ActiveCallSnapshot>? _sub;
+  CallEngine? _activeEngine;
 
   @override
   CallSession? build() {
@@ -112,7 +124,7 @@ class CallSessionController extends Notifier<CallSession?> {
     return null;
   }
 
-  DemoCallEngine get _engine => ref.read(demoCallEngineProvider);
+  CallEngine get _engine => _activeEngine ?? ref.read(demoCallEngineProvider);
   AppRepository get _repo => ref.read(appRepositoryProvider);
 
   Future<void> placeDemoCall(
@@ -124,13 +136,47 @@ class CallSessionController extends Notifier<CallSession?> {
       _repo.notify('warning', 'Call blocked', '$e164 is on the DNC list.');
       return;
     }
+    _activeEngine = ref.read(demoCallEngineProvider);
     final callId = await _engine.placeCall(e164, fromNumberId: fromNumberId);
-    _attach(callId, e164, CallDirection.outbound, campaignId: campaignId);
+    _attach(
+      callId,
+      e164,
+      CallDirection.outbound,
+      campaignId: campaignId,
+      providerId: 'demo',
+    );
+  }
+
+  Future<void> placeLiveCall(
+    String e164, {
+    String? fromNumberId,
+    String? campaignId,
+  }) async {
+    if (_repo.isDnc(e164)) {
+      _repo.notify('warning', 'Call blocked', '$e164 is on the DNC list.');
+      return;
+    }
+    _activeEngine = ref.read(twilioCallEngineProvider);
+    final callId = await _engine.placeCall(e164, fromNumberId: fromNumberId);
+    _attach(
+      callId,
+      e164,
+      CallDirection.outbound,
+      campaignId: campaignId,
+      providerId: 'twilio',
+    );
   }
 
   void simulateInbound(String fromE164) {
-    final callId = _engine.simulateInbound(fromE164);
-    _attach(callId, fromE164, CallDirection.inbound);
+    final demo = ref.read(demoCallEngineProvider);
+    _activeEngine = demo;
+    final callId = demo.simulateInbound(fromE164);
+    _attach(
+      callId,
+      fromE164,
+      CallDirection.inbound,
+      providerId: 'demo',
+    );
     _repo.notify('call', 'Incoming demo call', 'From $fromE164');
   }
 
@@ -139,6 +185,7 @@ class CallSessionController extends Notifier<CallSession?> {
     String e164,
     CallDirection dir, {
     String? campaignId,
+    required String providerId,
   }) {
     final contact = _repo.state.contacts
         .where((c) => c.phones.any((p) => p.e164 == e164))
@@ -156,6 +203,7 @@ class CallSessionController extends Notifier<CallSession?> {
       contact: contact,
       campaignId: campaignId,
       handoff: HandoffMachine(),
+      providerId: providerId,
     );
     _sub?.cancel();
     _sub = _engine.callStates.listen((snap) {
@@ -226,8 +274,12 @@ class CallSessionController extends Notifier<CallSession?> {
   // Call controls — delegate to engine.
   Future<void> accept() async => _engine.acceptCall(state!.snapshot.callId);
   Future<void> reject() async => _engine.rejectCall(state!.snapshot.callId);
-  Future<void> sendToVoicemail() async =>
-      _engine.sendToVoicemail(state!.snapshot.callId);
+  Future<void> sendToVoicemail() async {
+    final engine = _engine;
+    if (engine is DemoCallEngine) {
+      await engine.sendToVoicemail(state!.snapshot.callId);
+    }
+  }
   Future<void> end() async => _engine.endCall(state!.snapshot.callId);
   Future<void> hold() async => _engine.hold(state!.snapshot.callId);
   Future<void> resume() async => _engine.resume(state!.snapshot.callId);
@@ -262,6 +314,7 @@ class CallSessionController extends Notifier<CallSession?> {
 
   void clear() {
     _sub?.cancel();
+    _activeEngine = null;
     state = null;
   }
 }
