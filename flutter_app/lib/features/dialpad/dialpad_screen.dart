@@ -25,7 +25,7 @@ class DialpadScreen extends ConsumerStatefulWidget {
 class _DialpadScreenState extends ConsumerState<DialpadScreen> {
   String digits = '';
   String? callerIdNumberId;
-  String mode = 'demo'; // demo | external
+  String mode = 'twilio'; // twilio | demo | external
 
   void _append(String d) => setState(() => digits += d);
   void _backspace() => setState(
@@ -81,7 +81,14 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                       ),
                       Row(
                         children: [
-                          const DemoBadge(),
+                          if (mode == 'demo')
+                            const DemoBadge()
+                          else
+                            const Chip(
+                              avatar: Icon(Icons.cloud_done, size: 14),
+                              label: Text('TWILIO LIVE'),
+                              visualDensity: VisualDensity.compact,
+                            ),
                           const SizedBox(width: 8),
                           Tooltip(
                             message: 'Demo provider: local simulation only',
@@ -207,6 +214,10 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                       const SizedBox(height: 8),
                       SegmentedButton<String>(
                         segments: const [
+                          ButtonSegment(
+                            value: 'twilio',
+                            label: Text('Twilio'),
+                          ),
                           ButtonSegment(value: 'demo', label: Text('Demo')),
                           ButtonSegment(
                             value: 'external',
@@ -233,7 +244,13 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                         onPressed:
                             normalized == null ? null : () => _call(normalized),
                         icon: const Icon(Icons.call),
-                        label: Text(mode == 'demo' ? 'Demo call' : 'OS dialer'),
+                        label: Text(
+                          mode == 'twilio'
+                              ? 'Call live'
+                              : mode == 'demo'
+                                  ? 'Demo call'
+                                  : 'OS dialer',
+                        ),
                       ),
                       OutlinedButton.icon(
                         onPressed: normalized == null
@@ -297,17 +314,21 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                       ],
                     ),
                   const Divider(height: 24),
-                  OutlinedButton.icon(
-                    onPressed: () => ref
-                        .read(callSessionProvider.notifier)
-                        .simulateInbound('+13145550142'),
-                    icon: const Icon(Icons.phone_callback_outlined, size: 16),
-                    label: const Text('Simulate incoming demo call'),
-                  ),
+                  if (mode == 'demo')
+                    OutlinedButton.icon(
+                      onPressed: () => ref
+                          .read(callSessionProvider.notifier)
+                          .simulateInbound('+13145550142'),
+                      icon: const Icon(Icons.phone_callback_outlined, size: 16),
+                      label: const Text('Simulate incoming demo call'),
+                    ),
                   const SizedBox(height: 6),
-                  const Text(
-                    'Demo mode: calls are simulated locally. No real person is contacted. '
-                    'Emergency calls are NOT possible.',
+                  Text(
+                    mode == 'twilio'
+                        ? 'Live trial calling via +1 605-205-8454. Calls are currently '
+                            'restricted to the verified test destination. Emergency calls are NOT possible.'
+                        : 'Demo mode: calls are simulated locally. No real person is contacted. '
+                            'Emergency calls are NOT possible.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 11,
@@ -343,9 +364,23 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
       }
       return;
     }
-    await ref
-        .read(callSessionProvider.notifier)
-        .placeDemoCall(e164, fromNumberId: callerIdNumberId);
+    if (mode == 'twilio') {
+      try {
+        await ref
+            .read(callSessionProvider.notifier)
+            .placeLiveCall(e164, fromNumberId: callerIdNumberId);
+      } catch (error) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Live call failed: $error')),
+          );
+        }
+      }
+    } else {
+      await ref
+          .read(callSessionProvider.notifier)
+          .placeDemoCall(e164, fromNumberId: callerIdNumberId);
+    }
   }
 
   void _addContact(String e164) {
