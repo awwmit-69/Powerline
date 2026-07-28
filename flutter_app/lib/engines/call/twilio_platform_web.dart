@@ -8,13 +8,13 @@ import 'twilio_platform_contract.dart';
 TwilioPlatform createTwilioPlatform() => _WebTwilioPlatform();
 
 class _WebTwilioPlatform implements TwilioPlatform {
-  Future<T> _promise<T>(String function, List<Object?> arguments) {
-    final completer = Completer<T>();
+  Future<Object?> _promise(String function, List<Object?> arguments) {
+    final completer = Completer<Object?>();
     final promise = js.context.callMethod(function, arguments) as js.JsObject;
     promise.callMethod('then', [
       js.JsFunction.withThis((Object? _, Object? value) {
         if (!completer.isCompleted) {
-          completer.complete(value as T);
+          completer.complete(value);
         }
       }),
     ]);
@@ -34,20 +34,23 @@ class _WebTwilioPlatform implements TwilioPlatform {
     TwilioStateCallback onState,
     TwilioErrorCallback onError,
   ) async {
-    await _promise<Object?>('powerlineTwilioInitialize', [
+    await _promise('powerlineTwilioInitialize', [
       tokenUrl,
       js.JsFunction.withThis(
-        (Object? _, String state, String callId) => onState(state, callId),
+        (Object? _, Object? state, Object? callId) =>
+            onState(state.toString(), callId.toString()),
       ),
       js.JsFunction.withThis(
-        (Object? _, String message) => onError(message),
+        (Object? _, Object? message) => onError(message.toString()),
       ),
     ]);
   }
 
   @override
-  Future<String> placeCall(String destination) =>
-      _promise<String>('powerlineTwilioPlaceCall', [destination]);
+  Future<String> placeCall(String destination) async {
+    final callId = await _promise('powerlineTwilioPlaceCall', [destination]);
+    return callId.toString();
+  }
 
   @override
   void hangup() => js.context.callMethod('powerlineTwilioHangup');
