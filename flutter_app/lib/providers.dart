@@ -171,12 +171,7 @@ class CallSessionController extends Notifier<CallSession?> {
     final demo = ref.read(demoCallEngineProvider);
     _activeEngine = demo;
     final callId = demo.simulateInbound(fromE164);
-    _attach(
-      callId,
-      fromE164,
-      CallDirection.inbound,
-      providerId: 'demo',
-    );
+    _attach(callId, fromE164, CallDirection.inbound, providerId: 'demo');
     _repo.notify('call', 'Incoming demo call', 'From $fromE164');
   }
 
@@ -280,6 +275,7 @@ class CallSessionController extends Notifier<CallSession?> {
       await engine.sendToVoicemail(state!.snapshot.callId);
     }
   }
+
   Future<void> end() async => _engine.endCall(state!.snapshot.callId);
   Future<void> hold() async => _engine.hold(state!.snapshot.callId);
   Future<void> resume() async => _engine.resume(state!.snapshot.callId);
@@ -321,8 +317,8 @@ class CallSessionController extends Notifier<CallSession?> {
 
 final callSessionProvider =
     NotifierProvider<CallSessionController, CallSession?>(
-  CallSessionController.new,
-);
+      CallSessionController.new,
+    );
 
 // ---- Multi-device ring simulation ----
 class RingSimEvent {
@@ -369,8 +365,8 @@ class DevicePresenceSimulator extends Notifier<List<RingSimEvent>> {
 
 final ringSimProvider =
     NotifierProvider<DevicePresenceSimulator, List<RingSimEvent>>(
-  DevicePresenceSimulator.new,
-);
+      DevicePresenceSimulator.new,
+    );
 
 // ---- Global search ----
 class SearchHit {
