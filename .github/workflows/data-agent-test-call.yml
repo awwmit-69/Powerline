@@ -1,0 +1,57 @@
+name: Data Agent Test Call
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  call:
+    name: Call verified Data Rep test number
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate protected configuration
+        env:
+          ACCOUNT_SID: ${{ secrets.TWILIOACCOUNTSID }}
+          API_KEY_SID: ${{ secrets.TWILIO_API }}
+          API_KEY_SECRET: ${{ secrets.TWILIOPASSWORD }}
+          FROM_NUMBER: ${{ secrets.TWILIO_FROM_NUMBER }}
+          TEST_NUMBER: ${{ secrets.TWILIO_TEST_NUMBER }}
+        run: |
+          for key in ACCOUNT_SID API_KEY_SID API_KEY_SECRET FROM_NUMBER TEST_NUMBER; do
+            if [ -z "${!key}" ]; then
+              echo "::error::$key is not configured"
+              exit 1
+            fi
+          done
+
+      - name: Originate Data Rep test call
+        env:
+          ACCOUNT_SID: ${{ secrets.TWILIOACCOUNTSID }}
+          API_KEY_SID: ${{ secrets.TWILIO_API }}
+          API_KEY_SECRET: ${{ secrets.TWILIOPASSWORD }}
+          FROM_NUMBER: ${{ secrets.TWILIO_FROM_NUMBER }}
+          TEST_NUMBER: ${{ secrets.TWILIO_TEST_NUMBER }}
+        run: |
+          response="$(
+            curl --silent --show-error \
+              --user "$API_KEY_SID:$API_KEY_SECRET" \
+              --request POST \
+              "https://api.twilio.com/2010-04-01/Accounts/$ACCOUNT_SID/Calls.json" \
+              --data-urlencode "From=$FROM_NUMBER" \
+              --data-urlencode "To=$TEST_NUMBER" \
+              --data-urlencode 'Twiml=<Response><Say voice="Polly.Joanna">Hello Amit. This is the PowerLine Data Rep test agent. You cannot sell if you are targeting the wrong audience. TruuOwner helps sales teams qualify the right homeowners, protect every cent spent on outreach, and turn clean records into real conversations. Your live Twilio API calling route is working.</Say></Response>'
+          )"
+          RESPONSE="$response" python3 - <<'PY'
+          import json
+          import os
+          import sys
+
+          payload = json.loads(os.environ["RESPONSE"])
+          if payload.get("sid"):
+              print(f"Call accepted: {payload['sid']} ({payload.get('status', 'queued')})")
+              sys.exit(0)
+          print(f"Twilio rejected the call: {payload.get('message', 'unknown error')}")
+          sys.exit(1)
+          PY
