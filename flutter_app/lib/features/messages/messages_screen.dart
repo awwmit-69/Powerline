@@ -24,6 +24,7 @@ class MessagesScreen extends ConsumerStatefulWidget {
 class _MessagesScreenState extends ConsumerState<MessagesScreen> {
   String? selectedConvId;
   String filter = '';
+  bool liveSms = true;
   final composer = TextEditingController();
 
   @override
@@ -69,6 +70,26 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
               isDense: true,
             ),
             onChanged: (v) => setState(() => filter = v),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+          child: SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment(
+                value: true,
+                icon: Icon(Icons.cell_tower, size: 16),
+                label: Text('Twilio live'),
+              ),
+              ButtonSegment(
+                value: false,
+                icon: Icon(Icons.science_outlined, size: 16),
+                label: Text('Test mode'),
+              ),
+            ],
+            selected: {liveSms},
+            onSelectionChanged: (value) =>
+                setState(() => liveSms = value.first),
           ),
         ),
         Expanded(
@@ -230,16 +251,22 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
         direction: CallDirection.outbound,
         body: text,
         state: MessageState.sending,
+        provider: liveSms ? 'twilio' : 'demo',
         createdAt: DateTime.now(),
+        isDemo: !liveSms,
       ),
     );
     composer.clear();
-    final provider = ref.read(demoMessagingProvider);
+    final provider = liveSms
+        ? ref.read(twilioMessagingProvider)
+        : ref.read(demoMessagingProvider);
     // Wire provider events back into the repo for this send.
     final sub = provider.events.listen((e) {
       if (e.kind == 'delivery') {
         repo.updateMessageState(msgId, MessageState.sent);
         repo.updateMessageState(msgId, MessageState.delivered);
+      } else if (e.kind == 'failure') {
+        repo.updateMessageState(msgId, MessageState.failed);
       } else if (e.kind == 'inbound' && e.from == conv.remoteE164) {
         // Simulated reply — honor opt-out keywords.
         final body = e.body ?? '';
@@ -255,13 +282,24 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
         );
       }
     });
-    await provider.sendSms(
-      OutboundMessageRequest(
-        to: conv.remoteE164,
-        from: stateOf(ref).numbers.firstOrNull?.e164 ?? '+10005550100',
-        body: text,
-      ),
-    );
+    try {
+      await provider.sendSms(
+        OutboundMessageRequest(
+          to: conv.remoteE164,
+          from: liveSms
+              ? '+16052058454'
+              : stateOf(ref).numbers.firstOrNull?.e164 ?? '+10005550100',
+          body: text,
+        ),
+      );
+    } catch (error) {
+      repo.updateMessageState(msgId, MessageState.failed);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('SMS failed: $error')),
+        );
+      }
+    }
     Future<void>.delayed(const Duration(seconds: 4), () => sub.cancel());
   }
 }
