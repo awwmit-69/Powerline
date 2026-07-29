@@ -4,6 +4,7 @@ library;
 import 'dart:async';
 
 import '../call/call_engine.dart' show EngineStatus;
+import 'twilio_messaging_client.dart';
 
 class OutboundMessageRequest {
   final String to;
@@ -191,6 +192,86 @@ class MockMessagingProvider implements MessagingProvider {
 
   @override
   Future<void> dispose() async => _events.close();
+}
+
+class TwilioMessagingProvider implements MessagingProvider {
+  final String endpoint;
+  final TwilioMessagingClient _client;
+  final _events = StreamController<MessagingEvent>.broadcast();
+
+  TwilioMessagingProvider({
+    this.endpoint = 'https://powerline-voice-2020.twil.io/sms',
+    TwilioMessagingClient? client,
+  }) : _client = client ?? createTwilioMessagingClient();
+
+  @override
+  String get providerId => 'twilio';
+
+  @override
+  EngineStatus get status => const EngineStatus(
+        provider: 'Twilio Messaging',
+        mockMode: false,
+        connected: true,
+        missingConfiguration: [],
+        simulatedCapabilities: [],
+        unsupportedCapabilities: ['MMS attachments'],
+      );
+
+  @override
+  Stream<MessagingEvent> get events => _events.stream;
+
+  @override
+  Future<String> sendSms(OutboundMessageRequest req) async {
+    try {
+      final sid = await _client.send(
+        endpoint: endpoint,
+        to: req.to,
+        from: req.from,
+        body: req.body,
+      );
+      _events.add(MessagingEvent(kind: 'delivery', messageId: sid));
+      return sid;
+    } catch (error) {
+      _events.add(
+        MessagingEvent(
+          kind: 'failure',
+          messageId: '',
+          error: error.toString(),
+        ),
+      );
+      rethrow;
+    }
+  }
+
+  @override
+  Future<String> sendMms(OutboundMessageRequest req) {
+    throw UnsupportedError('Live MMS attachments are not enabled yet.');
+  }
+
+  @override
+  MessagingEvent mapInboundWebhook(Map<String, dynamic> payload) {
+    final body = payload['Body']?.toString() ?? payload['body']?.toString();
+    final normalized = body?.trim().toLowerCase();
+    final optOut = const {
+      'stop',
+      'unsubscribe',
+      'stopall',
+      'cancel',
+      'end',
+      'quit',
+    }.contains(normalized);
+    return MessagingEvent(
+      kind: optOut ? 'opt-out' : 'inbound',
+      messageId: payload['MessageSid']?.toString() ??
+          payload['messageId']?.toString() ??
+          'twilio-inbound',
+      from: payload['From']?.toString() ?? payload['from']?.toString(),
+      body: body,
+    );
+  }
+
+  @override
+  Future<void> dispose() => _events.close();
 }
 
 MockMessagingProvider mockSignalMashMessaging() => MockMessagingProvider(
