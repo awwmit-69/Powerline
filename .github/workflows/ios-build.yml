@@ -1,0 +1,70 @@
+name: PowerLine iOS Build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: powerline-ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios:
+    name: Build unsigned iOS app
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Complete iOS runner
+        working-directory: flutter_app
+        run: flutter create --platforms=ios --org com.azdglobal .
+      - name: Add Twilio Voice iOS SDK
+        working-directory: flutter_app
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("ios/Podfile")
+          text = path.read_text()
+          marker = "target 'Runner' do\n"
+          if marker not in text:
+              raise SystemExit("Runner target missing from Podfile")
+          text = text.replace(
+              marker,
+              marker + "  pod 'TwilioVoice', '~> 6.13'\n",
+              1,
+          )
+          path.write_text(text)
+          PY
+      - name: Install dependencies
+        working-directory: flutter_app
+        run: |
+          flutter pub get
+          cd ios
+          pod install --repo-update
+      - name: Configure microphone and VoIP background modes
+        run: |
+          PLIST="flutter_app/ios/Runner/Info.plist"
+          /usr/libexec/PlistBuddy -c "Delete :NSMicrophoneUsageDescription" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :NSMicrophoneUsageDescription string PowerLine needs microphone access so you can make and receive business calls." "$PLIST"
+          /usr/libexec/PlistBuddy -c "Delete :UIBackgroundModes" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes array" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:0 string audio" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:1 string voip" "$PLIST"
+      - name: Build release app without signing
+        working-directory: flutter_app
+        run: flutter build ios --release --no-codesign
+      - name: Package app
+        run: ditto -c -k --sequesterRsrc --keepParent flutter_app/build/ios/iphoneos/Runner.app PowerLine_iOS_Unsigned.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PowerLine_iOS_Unsigned
+          path: PowerLine_iOS_Unsigned.zip
+          retention-days: 14
