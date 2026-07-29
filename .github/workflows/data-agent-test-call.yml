@@ -34,6 +34,19 @@ jobs:
           FROM_NUMBER: ${{ secrets.TWILIO_FROM_NUMBER }}
           TEST_NUMBER: ${{ secrets.TWILIO_TEST_NUMBER }}
         run: |
+          ACCOUNT_SID="$(printf '%s' "$ACCOUNT_SID" | tr -d '[:space:]\"')"
+          API_KEY_SID="$(printf '%s' "$API_KEY_SID" | tr -d '[:space:]\"')"
+          API_KEY_SECRET="$(printf '%s' "$API_KEY_SECRET" | tr -d '\r\n\"')"
+          FROM_NUMBER="$(printf '%s' "$FROM_NUMBER" | tr -d '[:space:]\"')"
+          TEST_NUMBER="$(printf '%s' "$TEST_NUMBER" | tr -d '[:space:]\"')"
+          if ! [[ "$ACCOUNT_SID" =~ ^AC[0-9a-fA-F]{32}$ ]]; then
+            echo "::error::TWILIOACCOUNTSID must contain only the AC-prefixed Account SID"
+            exit 1
+          fi
+          if ! [[ "$API_KEY_SID" =~ ^SK[0-9a-fA-F]{32}$ ]]; then
+            echo "::error::TWILIO_API must contain only the SK-prefixed API Key SID"
+            exit 1
+          fi
           response="$(
             curl --silent --show-error \
               --user "$API_KEY_SID:$API_KEY_SECRET" \
