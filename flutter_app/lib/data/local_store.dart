@@ -11,6 +11,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 abstract class SnapshotStore {
   Future<Map<String, dynamic>?> load();
@@ -106,4 +107,52 @@ class MemorySnapshotStore implements SnapshotStore {
 
   @override
   Future<void> wipe() async => _snap = null;
+}
+
+class SharedPreferencesSnapshotStore implements SnapshotStore {
+  static const _stateKey = 'powerline_state_v1';
+
+  @override
+  Future<Map<String, dynamic>?> load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_stateKey);
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      return jsonDecode(raw) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<void> save(Map<String, dynamic> snapshot) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_stateKey, jsonEncode(snapshot));
+  }
+
+  @override
+  Future<String> backupTo(String suffix) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_stateKey);
+    if (raw != null) {
+      await prefs.setString('powerline_backup_$suffix', raw);
+    }
+    return 'preferences://$suffix';
+  }
+
+  @override
+  Future<void> restoreFrom(String path) async {
+    final suffix = path.replaceFirst('preferences://', '');
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('powerline_backup_$suffix');
+    if (raw == null) throw StateError('backup not found');
+    jsonDecode(raw);
+    await prefs.setString(_stateKey, raw);
+  }
+
+  @override
+  Future<void> wipe() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_stateKey);
+  }
 }
