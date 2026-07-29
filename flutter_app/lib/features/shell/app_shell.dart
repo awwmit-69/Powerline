@@ -15,6 +15,7 @@ import '../search/search_palette.dart';
 
 const _navItems = [
   ('/home', Icons.dashboard_outlined, 'Home'),
+  ('/workspaces', Icons.space_dashboard_outlined, 'Rep Views'),
   ('/dialpad', Icons.dialpad, 'Dialpad'),
   ('/messages', Icons.chat_bubble_outline, 'Messages'),
   ('/calls', Icons.call_outlined, 'Calls'),
@@ -35,8 +36,9 @@ class AppShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(callSessionProvider);
     final wide = MediaQuery.of(context).size.width >= 900;
-    final index =
-        _navItems.indexWhere((i) => location.startsWith(i.$1)).clamp(0, 9);
+    final index = _navItems
+        .indexWhere((i) => location.startsWith(i.$1))
+        .clamp(0, _navItems.length - 1);
 
     final body = Stack(
       children: [
@@ -133,7 +135,9 @@ class AppShell extends ConsumerWidget {
                 ),
                 const Padding(
                   padding: EdgeInsets.all(12),
-                  child: DemoBadge(label: 'DEMO MODE — no live telecom'),
+                  child: DemoBadge(
+                    label: 'TWILIO CALLING LIVE · AI/SMS TEST MODE',
+                  ),
                 ),
               ],
             ),
