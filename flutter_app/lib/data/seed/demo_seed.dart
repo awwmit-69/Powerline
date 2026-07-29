@@ -108,7 +108,11 @@ AppState buildDemoSeed() {
         jobTitle: i % 4 == 0 ? 'Owner' : 'Manager',
         phones: [PhoneEntry(label: 'mobile', e164: _phoneFor(i))],
         emails: ['demo.contact$i@mail.example'],
-        tags: i % 5 == 0 ? const ['storm-lead'] : const ['inbound'],
+        tags: i >= 40
+            ? const ['truuowner-buyer', 'data-sales']
+            : i % 5 == 0
+                ? const ['storm-lead']
+                : const ['inbound'],
         timeZone: i % 2 == 0 ? 'America/Chicago' : 'America/New_York',
         dnc: i == 24 || i == 49,
         smsOptOut: i == 29,
@@ -121,6 +125,15 @@ AppState buildDemoSeed() {
   }
 
   final numbers = <PowerlineNumber>[
+    const PowerlineNumber(
+      id: 'pn_twilio_live',
+      e164: '+16052058454',
+      label: 'PowerLine Live',
+      provider: 'twilio',
+      status: 'active',
+      isDemo: false,
+      a2pStatus: 'trial-restricted',
+    ),
     const PowerlineNumber(
       id: 'pn_tx',
       e164: '+12145550100',
@@ -321,6 +334,31 @@ AppState buildDemoSeed() {
       leadContactIds: [for (var i = 0; i < 12; i++) 'ct_seed$i'],
       createdAt: now.subtract(const Duration(days: 2)),
     ),
+    Campaign(
+      id: 'cp_data',
+      name: 'TruuOwner Data Buyers',
+      description:
+          'Qualify buyers by audience, geography, volume, fields, and delivery date.',
+      offer: 'CRM-ready homeowner records with clear field definitions',
+      industry: 'Data Sales',
+      status: CampaignStatus.active,
+      timeZone: 'America/New_York',
+      assignedNumberIds: const ['pn_twilio_live'],
+      assignedAgentIds: const ['ag_data'],
+      leadContactIds: [for (var i = 40; i < 80; i++) 'ct_seed$i'],
+      callScript:
+          'Before we talk record count, who exactly are you trying to reach, where, and what makes a record usable for your team?',
+      messageTemplates: const [
+        'Hi {firstName}, I can map the right homeowner audience, fields, geography, and volume before you spend on the wrong records.',
+      ],
+      objectionLibrary: const {
+        'too expensive':
+            'Let us price the usable records and targeting—not a pile of rows your reps cannot sell.',
+        'need a sample':
+            'I can walk you through the fields, filters, suppression, and delivery format first.',
+      },
+      createdAt: now.subtract(const Duration(days: 3)),
+    ),
   ];
 
   final deals = <PipelineDeal>[
@@ -367,6 +405,7 @@ AppState buildDemoSeed() {
       name: 'Roofing Appointment Assistant',
       description: 'Books inspection appointments for roofing campaigns.',
       role: 'outbound',
+      voiceProvider: 'elevenlabs:arpita-bb',
       greeting:
           'Hi! I am an automated assistant for the demo roofing team. This call is simulated.',
       systemPrompt:
@@ -408,6 +447,30 @@ AppState buildDemoSeed() {
       role: 'inbound',
       greeting:
           'Hello! This is the Powerline demo AI agent. This conversation is simulated.',
+    ),
+    const AiAgent(
+      id: 'ag_data',
+      name: 'TruuOwner Buyer Qualifier',
+      description:
+          'Qualifies data buyers before a human rep scopes volume and pricing.',
+      role: 'outbound',
+      voiceProvider: 'elevenlabs:arpita-bb',
+      greeting:
+          'Hi, this is the automated TruuOwner qualification assistant. I will ask a few questions before connecting you with a data specialist.',
+      systemPrompt:
+          'Identify audience, geography, volume, required fields, use case, delivery date, CRM, and budget. Never promise an accuracy rate or final price. Escalate qualified buyers to a human.',
+      qualificationGoals: [
+        'target audience',
+        'states or ZIP codes',
+        'record volume',
+        'required fields',
+        'CRM and campaign type',
+        'delivery date',
+        'budget range',
+      ],
+      assignedCampaignIds: ['cp_data'],
+      assignedNumberIds: ['pn_twilio_live'],
+      handoffDestination: 'ring-group:data-sales',
     ),
   ];
 
