@@ -19,18 +19,18 @@ enum CallState {
 
 extension CallStateX on CallState {
   bool get isTerminal => const {
-    CallState.completed,
-    CallState.failed,
-    CallState.busy,
-    CallState.noAnswer,
-    CallState.voicemail,
-  }.contains(this);
+        CallState.completed,
+        CallState.failed,
+        CallState.busy,
+        CallState.noAnswer,
+        CallState.voicemail,
+      }.contains(this);
 
   bool get isLive => const {
-    CallState.connected,
-    CallState.onHold,
-    CallState.transferring,
-  }.contains(this);
+        CallState.connected,
+        CallState.onHold,
+        CallState.transferring,
+      }.contains(this);
 }
 
 /// Legal call-state transitions for the demo engine. Guarded so UI bugs cannot

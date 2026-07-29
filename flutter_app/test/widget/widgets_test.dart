@@ -25,12 +25,12 @@ Future<ProviderContainer> _seededContainer() async {
 }
 
 Widget _wrap(ProviderContainer c, Widget child) => UncontrolledProviderScope(
-  container: c,
-  child: MaterialApp(
-    theme: powerlineTheme(),
-    home: Scaffold(body: child),
-  ),
-);
+      container: c,
+      child: MaterialApp(
+        theme: powerlineTheme(),
+        home: Scaffold(body: child),
+      ),
+    );
 
 void main() {
   testWidgets('Dialpad renders keys, formats input, shows Twilio badge', (

@@ -56,8 +56,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
       }).toList();
     }
     selectedConvId ??= convs.firstOrNull?.id;
-    final selected =
-        convs.where((c) => c.id == selectedConvId).firstOrNull ??
+    final selected = convs.where((c) => c.id == selectedConvId).firstOrNull ??
         s.conversations.where((c) => c.id == selectedConvId).firstOrNull;
 
     final listPanel = Column(

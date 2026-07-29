@@ -102,9 +102,8 @@ class AnalyticsScreen extends ConsumerWidget {
                 for (final cp in s.campaigns)
                   Builder(
                     builder: (context) {
-                      final cpCalls = s.calls
-                          .where((c) => c.campaignId == cp.id)
-                          .toList();
+                      final cpCalls =
+                          s.calls.where((c) => c.campaignId == cp.id).toList();
                       final appts = cpCalls
                           .where((c) => c.disposition == 'appointment-set')
                           .length;

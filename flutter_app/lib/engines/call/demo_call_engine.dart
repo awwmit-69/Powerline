@@ -23,32 +23,32 @@ class DemoCallEngine implements CallEngine {
   String? scriptedOutcome;
 
   DemoCallEngine({int? seed, this.tick = const Duration(milliseconds: 900)})
-    : _rng = Random(seed ?? 42);
+      : _rng = Random(seed ?? 42);
 
   @override
   String get providerId => 'demo';
 
   @override
   EngineStatus get status => const EngineStatus(
-    provider: 'Demo VoIP (local simulation)',
-    mockMode: true,
-    connected: false,
-    missingConfiguration: ['No live provider needed — demo only'],
-    simulatedCapabilities: [
-      'place',
-      'accept',
-      'reject',
-      'end',
-      'hold',
-      'resume',
-      'mute',
-      'dtmf',
-      'transfer',
-      'conference-marker',
-      'recording-marker',
-    ],
-    unsupportedCapabilities: ['real audio', 'real PSTN', 'E911'],
-  );
+        provider: 'Demo VoIP (local simulation)',
+        mockMode: true,
+        connected: false,
+        missingConfiguration: ['No live provider needed — demo only'],
+        simulatedCapabilities: [
+          'place',
+          'accept',
+          'reject',
+          'end',
+          'hold',
+          'resume',
+          'mute',
+          'dtmf',
+          'transfer',
+          'conference-marker',
+          'recording-marker',
+        ],
+        unsupportedCapabilities: ['real audio', 'real PSTN', 'E911'],
+      );
 
   @override
   Stream<ActiveCallSnapshot> get callStates => _stateCtrl.stream;

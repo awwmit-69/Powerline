@@ -1,7 +1,6 @@
 import 'twilio_messaging_client_stub.dart'
     if (dart.library.io) 'twilio_messaging_client_io.dart'
-    if (dart.library.html) 'twilio_messaging_client_web.dart'
-    as implementation;
+    if (dart.library.html) 'twilio_messaging_client_web.dart' as implementation;
 
 abstract class TwilioMessagingClient {
   Future<String> send({

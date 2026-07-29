@@ -8,15 +8,16 @@ DeviceRecord dev(
   bool ring = true,
   bool revoked = false,
   bool thisDev = false,
-}) => DeviceRecord(
-  id: id,
-  name: id,
-  type: DeviceType.androidPhone,
-  lastActive: DateTime(2026),
-  ringEnabled: ring,
-  revoked: revoked,
-  isThisDevice: thisDev,
-);
+}) =>
+    DeviceRecord(
+      id: id,
+      name: id,
+      type: DeviceType.androidPhone,
+      lastActive: DateTime(2026),
+      ringEnabled: ring,
+      revoked: revoked,
+      isThisDevice: thisDev,
+    );
 
 void main() {
   final openHours = BusinessHours(

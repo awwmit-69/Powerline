@@ -224,12 +224,12 @@ class _Column extends StatelessWidget {
   const _Column({required this.children});
   @override
   Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      for (final c in children)
-        Padding(padding: const EdgeInsets.only(bottom: 14), child: c),
-    ],
-  );
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final c in children)
+            Padding(padding: const EdgeInsets.only(bottom: 14), child: c),
+        ],
+      );
 }
 
 class _Panel extends StatelessWidget {
@@ -238,14 +238,14 @@ class _Panel extends StatelessWidget {
   const _Panel({required this.child}) : padding = const EdgeInsets.all(16);
   @override
   Widget build(BuildContext context) => Container(
-    padding: padding,
-    decoration: BoxDecoration(
-      color: PowerlineColors.panel,
-      border: Border.all(color: PowerlineColors.border),
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: child,
-  );
+        padding: padding,
+        decoration: BoxDecoration(
+          color: PowerlineColors.panel,
+          border: Border.all(color: PowerlineColors.border),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: child,
+      );
 }
 
 class _CardTitle extends StatelessWidget {
@@ -255,20 +255,20 @@ class _CardTitle extends StatelessWidget {
   const _CardTitle(this.title, this.icon, {this.trailing});
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 10),
-    child: Row(
-      children: [
-        Icon(icon, size: 16, color: PowerlineColors.cobalt),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: PowerlineColors.cobalt),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+            ),
+            const Spacer(),
+            if (trailing != null) trailing!,
+          ],
         ),
-        const Spacer(),
-        if (trailing != null) trailing!,
-      ],
-    ),
-  );
+      );
 }
 
 class _StatusChip extends StatelessWidget {
@@ -282,21 +282,21 @@ class _StatusChip extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-    decoration: BoxDecoration(
-      color: PowerlineColors.raised,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: PowerlineColors.border),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 13, color: color),
-        const SizedBox(width: 6),
-        Text(label, style: const TextStyle(fontSize: 12)),
-      ],
-    ),
-  );
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: PowerlineColors.raised,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: PowerlineColors.border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 13, color: color),
+            const SizedBox(width: 6),
+            Text(label, style: const TextStyle(fontSize: 12)),
+          ],
+        ),
+      );
 }
 
 class _AvailabilityChip extends StatelessWidget {
@@ -308,8 +308,8 @@ class _AvailabilityChip extends StatelessWidget {
     final color = value == 'Available'
         ? PowerlineColors.stateConnected
         : value == 'Away'
-        ? PowerlineColors.stateRinging
-        : PowerlineColors.stateFailed;
+            ? PowerlineColors.stateRinging
+            : PowerlineColors.stateFailed;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
@@ -392,51 +392,51 @@ class _Metric extends ConsumerWidget {
   const _Metric(this.label, this.value, this.icon, this.color, this.route);
   @override
   Widget build(BuildContext context, WidgetRef ref) => SizedBox(
-    width: 186,
-    child: InkWell(
-      onTap: () => context.go(route),
-      borderRadius: BorderRadius.circular(12),
-      child: _Panel(
-        child: Row(
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, size: 19, color: color),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                    ),
+        width: 186,
+        child: InkWell(
+          onTap: () => context.go(route),
+          borderRadius: BorderRadius.circular(12),
+          child: _Panel(
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: PowerlineColors.textSecondary,
-                    ),
+                  child: Icon(icon, size: 19, color: color),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        value,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: PowerlineColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
-    ),
-  );
+      );
 }
 
 // ---------- LEFT COLUMN ----------
@@ -445,8 +445,7 @@ class _RecentConversations extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = stateOf(ref);
-    final convs = [...s.conversations]
-      ..sort(
+    final convs = [...s.conversations]..sort(
         (a, b) => (b.lastMessageAt ?? DateTime(0)).compareTo(
           a.lastMessageAt ?? DateTime(0),
         ),
@@ -463,8 +462,7 @@ class _RecentConversations extends ConsumerWidget {
           if (convs.isEmpty) const _Empty('No conversations yet'),
           for (final c in convs.take(5))
             _Row(
-              title:
-                  _contactName(s, c.contactId) ??
+              title: _contactName(s, c.contactId) ??
                   PhoneNumberUtil.format(c.remoteE164),
               subtitle: _lastBody(s, c.id),
               badge: c.unreadCount > 0 ? '${c.unreadCount}' : null,
@@ -489,8 +487,7 @@ class _MissedReturnQueue extends ConsumerWidget {
           if (missed.isEmpty) const _Empty('No missed calls'),
           for (final c in missed)
             _Row(
-              title:
-                  _contactName(s, c.contactId) ??
+              title: _contactName(s, c.contactId) ??
                   PhoneNumberUtil.format(c.remoteE164),
               subtitle:
                   '${c.startedAt.month}/${c.startedAt.day} · ${c.direction.name}',
@@ -522,8 +519,7 @@ class _VoicemailCallbacks extends ConsumerWidget {
           if (vms.isEmpty) const _Empty('No new voicemails'),
           for (final v in vms)
             _Row(
-              title:
-                  _contactByPhone(s, v.remoteE164) ??
+              title: _contactByPhone(s, v.remoteE164) ??
                   PhoneNumberUtil.format(v.remoteE164),
               subtitle: v.transcript.isEmpty
                   ? '${v.durationSeconds}s voicemail'
@@ -617,8 +613,8 @@ class _QuickDialpadState extends ConsumerState<_QuickDialpad> {
                   onPressed: normalized == null
                       ? null
                       : () => ref
-                            .read(callSessionProvider.notifier)
-                            .placeDemoCall(normalized),
+                          .read(callSessionProvider.notifier)
+                          .placeDemoCall(normalized),
                   icon: const Icon(Icons.call, size: 16),
                   label: const Text('Demo call'),
                 ),
@@ -670,8 +666,7 @@ class _ActiveCallPanel extends ConsumerWidget {
             )
           else if (lastCall != null)
             _Row(
-              title:
-                  _contactName(s, lastCall.contactId) ??
+              title: _contactName(s, lastCall.contactId) ??
                   PhoneNumberUtil.format(lastCall.remoteE164),
               subtitle:
                   'Last call · ${lastCall.disposition ?? lastCall.finalState.name} · ${lastCall.durationSeconds}s',
@@ -846,9 +841,8 @@ class _CampaignPerformance extends ConsumerWidget {
           for (final cp in s.campaigns.take(4))
             Builder(
               builder: (context) {
-                final cpCalls = s.calls
-                    .where((c) => c.campaignId == cp.id)
-                    .length;
+                final cpCalls =
+                    s.calls.where((c) => c.campaignId == cp.id).length;
                 final set = s.calls
                     .where(
                       (c) =>
@@ -902,9 +896,8 @@ class _Warnings extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final s = stateOf(ref);
     final warns = s.notifications.where((n) => !n.read).take(4).toList();
-    final integErrors = s.integrations
-        .where((i) => i.state == ProviderState.error)
-        .toList();
+    final integErrors =
+        s.integrations.where((i) => i.state == ProviderState.error).toList();
     return _Panel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -990,49 +983,50 @@ class _Row extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) => InkWell(
-    onTap: onTap,
-    borderRadius: BorderRadius.circular(8),
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: PowerlineColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: PowerlineColors.textSecondary,
-                  ),
+              ),
+              if (badge != null)
+                CircleAvatar(
+                  radius: 9,
+                  backgroundColor: PowerlineColors.cobalt,
+                  child: Text(badge!, style: const TextStyle(fontSize: 9)),
                 ),
-              ],
-            ),
+              if (trailingIcon != null)
+                Icon(trailingIcon,
+                    size: 16, color: PowerlineColors.textSecondary),
+            ],
           ),
-          if (badge != null)
-            CircleAvatar(
-              radius: 9,
-              backgroundColor: PowerlineColors.cobalt,
-              child: Text(badge!, style: const TextStyle(fontSize: 9)),
-            ),
-          if (trailingIcon != null)
-            Icon(trailingIcon, size: 16, color: PowerlineColors.textSecondary),
-        ],
-      ),
-    ),
-  );
+        ),
+      );
 }
 
 class _More extends StatelessWidget {
@@ -1040,12 +1034,12 @@ class _More extends StatelessWidget {
   const _More({required this.onTap});
   @override
   Widget build(BuildContext context) => InkWell(
-    onTap: onTap,
-    child: const Text(
-      'View all',
-      style: TextStyle(fontSize: 11, color: PowerlineColors.cobalt),
-    ),
-  );
+        onTap: onTap,
+        child: const Text(
+          'View all',
+          style: TextStyle(fontSize: 11, color: PowerlineColors.cobalt),
+        ),
+      );
 }
 
 class _Empty extends StatelessWidget {
@@ -1053,36 +1047,35 @@ class _Empty extends StatelessWidget {
   const _Empty(this.label);
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 10),
-    child: Text(
-      label,
-      style: const TextStyle(
-        fontSize: 12,
-        color: PowerlineColors.textSecondary,
-      ),
-    ),
-  );
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: PowerlineColors.textSecondary,
+          ),
+        ),
+      );
 }
 
 Widget _kv(String k, String v, Color color) => Padding(
-  padding: const EdgeInsets.symmetric(vertical: 3),
-  child: Row(
-    children: [
-      Icon(Icons.circle, size: 9, color: color),
-      const SizedBox(width: 8),
-      Expanded(child: Text(k, style: const TextStyle(fontSize: 12))),
-      Text(
-        v,
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        children: [
+          Icon(Icons.circle, size: 9, color: color),
+          const SizedBox(width: 8),
+          Expanded(child: Text(k, style: const TextStyle(fontSize: 12))),
+          Text(
+            v,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          ),
+        ],
       ),
-    ],
-  ),
-);
+    );
 
 String? _contactByPhone(AppState s, String phone) {
-  final m = s.contacts
-      .where((c) => c.phones.any((p) => p.e164 == phone))
-      .firstOrNull;
+  final m =
+      s.contacts.where((c) => c.phones.any((p) => p.e164 == phone)).firstOrNull;
   return m?.displayName;
 }
 

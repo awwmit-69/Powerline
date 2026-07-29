@@ -12,12 +12,12 @@ class DevicesPanel extends ConsumerWidget {
   const DevicesPanel({super.key});
 
   IconData _icon(DeviceType t) => switch (t) {
-    DeviceType.windowsDesktop => Icons.desktop_windows,
-    DeviceType.macDesktop => Icons.laptop_mac,
-    DeviceType.androidPhone => Icons.phone_android,
-    DeviceType.iphone => Icons.phone_iphone,
-    DeviceType.webSession => Icons.public,
-  };
+        DeviceType.windowsDesktop => Icons.desktop_windows,
+        DeviceType.macDesktop => Icons.laptop_mac,
+        DeviceType.androidPhone => Icons.phone_android,
+        DeviceType.iphone => Icons.phone_iphone,
+        DeviceType.webSession => Icons.public,
+      };
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -186,8 +186,8 @@ class DevicesPanel extends ConsumerWidget {
                           onPressed: d.revoked
                               ? null
                               : () => repo.updateDevice(
-                                  d.copyWith(revoked: true),
-                                ),
+                                    d.copyWith(revoked: true),
+                                  ),
                         ),
                     ],
                   ),
@@ -200,12 +200,12 @@ class DevicesPanel extends ConsumerWidget {
   }
 
   Widget _toggle(String label, bool value, ValueChanged<bool> onChanged) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Text(label, style: const TextStyle(fontSize: 11)),
-      Switch(value: value, onChanged: onChanged),
-    ],
-  );
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 11)),
+          Switch(value: value, onChanged: onChanged),
+        ],
+      );
 
   String _ago(DateTime t) {
     final d = DateTime.now().difference(t);

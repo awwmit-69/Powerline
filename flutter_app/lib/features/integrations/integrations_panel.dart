@@ -13,20 +13,20 @@ class IntegrationsPanel extends ConsumerWidget {
   const IntegrationsPanel({super.key});
 
   Color _stateColor(ProviderState s) => switch (s) {
-    ProviderState.activeDemo => PowerlineColors.stateConnected,
-    ProviderState.configured => PowerlineColors.stateHold,
-    ProviderState.error => PowerlineColors.stateFailed,
-    ProviderState.disabled => PowerlineColors.textSecondary,
-    ProviderState.notConfigured => PowerlineColors.stateRinging,
-  };
+        ProviderState.activeDemo => PowerlineColors.stateConnected,
+        ProviderState.configured => PowerlineColors.stateHold,
+        ProviderState.error => PowerlineColors.stateFailed,
+        ProviderState.disabled => PowerlineColors.textSecondary,
+        ProviderState.notConfigured => PowerlineColors.stateRinging,
+      };
 
   String _stateLabel(ProviderState s) => switch (s) {
-    ProviderState.activeDemo => 'Active (demo)',
-    ProviderState.configured => 'Configured',
-    ProviderState.error => 'Error',
-    ProviderState.disabled => 'Disabled',
-    ProviderState.notConfigured => 'Not configured',
-  };
+        ProviderState.activeDemo => 'Active (demo)',
+        ProviderState.configured => 'Configured',
+        ProviderState.error => 'Error',
+        ProviderState.disabled => 'Disabled',
+        ProviderState.notConfigured => 'Not configured',
+      };
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

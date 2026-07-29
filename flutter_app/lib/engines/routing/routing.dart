@@ -43,35 +43,34 @@ class RoutingRule {
   });
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'strategy': strategy.name,
-    'deviceIds': deviceIds,
-    'forwardTo': forwardTo,
-    'delaySeconds': delaySeconds,
-    'businessHoursOnly': businessHoursOnly,
-    'afterHoursAction': afterHoursAction,
-    'ringGroup': ringGroup,
-    'priority': priority,
-  };
+        'id': id,
+        'name': name,
+        'strategy': strategy.name,
+        'deviceIds': deviceIds,
+        'forwardTo': forwardTo,
+        'delaySeconds': delaySeconds,
+        'businessHoursOnly': businessHoursOnly,
+        'afterHoursAction': afterHoursAction,
+        'ringGroup': ringGroup,
+        'priority': priority,
+      };
 
   factory RoutingRule.fromJson(Map<String, dynamic> j) => RoutingRule(
-    id: j['id'] as String? ?? '',
-    name: j['name'] as String? ?? '',
-    strategy: RoutingStrategy.values.firstWhere(
-      (s) => s.name == j['strategy'],
-      orElse: () => RoutingStrategy.ringAll,
-    ),
-    deviceIds: (j['deviceIds'] as List? ?? [])
-        .map((e) => e.toString())
-        .toList(),
-    forwardTo: j['forwardTo'] as String?,
-    delaySeconds: (j['delaySeconds'] as num?)?.toInt() ?? 20,
-    businessHoursOnly: j['businessHoursOnly'] as bool? ?? false,
-    afterHoursAction: j['afterHoursAction'] as String? ?? 'voicemail',
-    ringGroup: j['ringGroup'] as String?,
-    priority: (j['priority'] as num?)?.toInt() ?? 0,
-  );
+        id: j['id'] as String? ?? '',
+        name: j['name'] as String? ?? '',
+        strategy: RoutingStrategy.values.firstWhere(
+          (s) => s.name == j['strategy'],
+          orElse: () => RoutingStrategy.ringAll,
+        ),
+        deviceIds:
+            (j['deviceIds'] as List? ?? []).map((e) => e.toString()).toList(),
+        forwardTo: j['forwardTo'] as String?,
+        delaySeconds: (j['delaySeconds'] as num?)?.toInt() ?? 20,
+        businessHoursOnly: j['businessHoursOnly'] as bool? ?? false,
+        afterHoursAction: j['afterHoursAction'] as String? ?? 'voicemail',
+        ringGroup: j['ringGroup'] as String?,
+        priority: (j['priority'] as num?)?.toInt() ?? 0,
+      );
 }
 
 class RoutingDecision {

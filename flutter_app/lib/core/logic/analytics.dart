@@ -57,12 +57,10 @@ AnalyticsSummary computeAnalytics({
 }) {
   final answered = calls.where((c) => c.answeredAt != null).toList();
   final connected = calls.where((c) => c.durationSeconds > 0).toList();
-  final outboundMsgs = messages
-      .where((m) => m.direction == CallDirection.outbound)
-      .toList();
-  final inboundMsgs = messages
-      .where((m) => m.direction == CallDirection.inbound)
-      .toList();
+  final outboundMsgs =
+      messages.where((m) => m.direction == CallDirection.outbound).toList();
+  final inboundMsgs =
+      messages.where((m) => m.direction == CallDirection.inbound).toList();
   final delivered = outboundMsgs
       .where(
         (m) =>
@@ -86,19 +84,16 @@ AnalyticsSummary computeAnalytics({
     avgCallDurationSeconds: connected.isEmpty
         ? 0
         : connected.map((c) => c.durationSeconds).reduce((a, b) => a + b) /
-              connected.length,
-    inboundCalls: calls
-        .where((c) => c.direction == CallDirection.inbound)
-        .length,
-    outboundCalls: calls
-        .where((c) => c.direction == CallDirection.outbound)
-        .length,
+            connected.length,
+    inboundCalls:
+        calls.where((c) => c.direction == CallDirection.inbound).length,
+    outboundCalls:
+        calls.where((c) => c.direction == CallDirection.outbound).length,
     messagesSent: outboundMsgs.length,
     messagesReceived: inboundMsgs.length,
     deliveryRate: outboundMsgs.isEmpty ? 0 : delivered / outboundMsgs.length,
-    responseRate: outboundMsgs.isEmpty
-        ? 0
-        : inboundMsgs.length / outboundMsgs.length,
+    responseRate:
+        outboundMsgs.isEmpty ? 0 : inboundMsgs.length / outboundMsgs.length,
     voicemails: voicemails.length,
     appointmentsBooked: appointments.length,
     appointmentsConfirmed: appointments.where((a) => a.confirmed).length,
