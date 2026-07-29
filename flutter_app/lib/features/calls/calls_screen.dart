@@ -45,7 +45,8 @@ class _CallsScreenState extends ConsumerState<CallsScreen> {
     };
     if (search.isNotEmpty) {
       calls = calls.where((c) {
-        final name = s.contacts
+        final name =
+            s.contacts
                 .where((x) => x.id == c.contactId)
                 .firstOrNull
                 ?.displayName ??
@@ -130,8 +131,8 @@ class _CallsScreenState extends ConsumerState<CallsScreen> {
                         call.missed
                             ? Icons.phone_missed
                             : call.direction == CallDirection.inbound
-                                ? Icons.call_received
-                                : Icons.call_made,
+                            ? Icons.call_received
+                            : Icons.call_made,
                         size: 18,
                         color: call.missed
                             ? PowerlineColors.stateFailed

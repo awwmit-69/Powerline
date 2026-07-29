@@ -94,59 +94,58 @@ class AppState {
     Map<String, String>? settings,
     List<Map<String, dynamic>>? syncJournal,
     List<String>? activityLog,
-  }) =>
-      AppState(
-        contacts: contacts ?? this.contacts,
-        companies: companies ?? this.companies,
-        numbers: numbers ?? this.numbers,
-        conversations: conversations ?? this.conversations,
-        messages: messages ?? this.messages,
-        calls: calls ?? this.calls,
-        voicemails: voicemails ?? this.voicemails,
-        campaigns: campaigns ?? this.campaigns,
-        deals: deals ?? this.deals,
-        appointments: appointments ?? this.appointments,
-        callbacks: callbacks ?? this.callbacks,
-        agents: agents ?? this.agents,
-        devices: devices ?? this.devices,
-        routingRules: routingRules ?? this.routingRules,
-        handoffs: handoffs ?? this.handoffs,
-        dnc: dnc ?? this.dnc,
-        smsSuppression: smsSuppression ?? this.smsSuppression,
-        integrations: integrations ?? this.integrations,
-        notifications: notifications ?? this.notifications,
-        businessHours: businessHours ?? this.businessHours,
-        settings: settings ?? this.settings,
-        syncJournal: syncJournal ?? this.syncJournal,
-        activityLog: activityLog ?? this.activityLog,
-      );
+  }) => AppState(
+    contacts: contacts ?? this.contacts,
+    companies: companies ?? this.companies,
+    numbers: numbers ?? this.numbers,
+    conversations: conversations ?? this.conversations,
+    messages: messages ?? this.messages,
+    calls: calls ?? this.calls,
+    voicemails: voicemails ?? this.voicemails,
+    campaigns: campaigns ?? this.campaigns,
+    deals: deals ?? this.deals,
+    appointments: appointments ?? this.appointments,
+    callbacks: callbacks ?? this.callbacks,
+    agents: agents ?? this.agents,
+    devices: devices ?? this.devices,
+    routingRules: routingRules ?? this.routingRules,
+    handoffs: handoffs ?? this.handoffs,
+    dnc: dnc ?? this.dnc,
+    smsSuppression: smsSuppression ?? this.smsSuppression,
+    integrations: integrations ?? this.integrations,
+    notifications: notifications ?? this.notifications,
+    businessHours: businessHours ?? this.businessHours,
+    settings: settings ?? this.settings,
+    syncJournal: syncJournal ?? this.syncJournal,
+    activityLog: activityLog ?? this.activityLog,
+  );
 
   Map<String, dynamic> toJson() => {
-        'version': 1,
-        'contacts': contacts.map((e) => e.toJson()).toList(),
-        'companies': companies.map((e) => e.toJson()).toList(),
-        'numbers': numbers.map((e) => e.toJson()).toList(),
-        'conversations': conversations.map((e) => e.toJson()).toList(),
-        'messages': messages.map((e) => e.toJson()).toList(),
-        'calls': calls.map((e) => e.toJson()).toList(),
-        'voicemails': voicemails.map((e) => e.toJson()).toList(),
-        'campaigns': campaigns.map((e) => e.toJson()).toList(),
-        'deals': deals.map((e) => e.toJson()).toList(),
-        'appointments': appointments.map((e) => e.toJson()).toList(),
-        'callbacks': callbacks.map((e) => e.toJson()).toList(),
-        'agents': agents.map((e) => e.toJson()).toList(),
-        'devices': devices.map((e) => e.toJson()).toList(),
-        'routingRules': routingRules.map((e) => e.toJson()).toList(),
-        'handoffs': handoffs.map((e) => e.toJson()).toList(),
-        'dnc': dnc.map((e) => e.toJson()).toList(),
-        'smsSuppression': smsSuppression,
-        'integrations': integrations.map((e) => e.toJson()).toList(),
-        'notifications': notifications.map((e) => e.toJson()).toList(),
-        'businessHours': businessHours.toJson(),
-        'settings': settings,
-        'syncJournal': syncJournal,
-        'activityLog': activityLog,
-      };
+    'version': 1,
+    'contacts': contacts.map((e) => e.toJson()).toList(),
+    'companies': companies.map((e) => e.toJson()).toList(),
+    'numbers': numbers.map((e) => e.toJson()).toList(),
+    'conversations': conversations.map((e) => e.toJson()).toList(),
+    'messages': messages.map((e) => e.toJson()).toList(),
+    'calls': calls.map((e) => e.toJson()).toList(),
+    'voicemails': voicemails.map((e) => e.toJson()).toList(),
+    'campaigns': campaigns.map((e) => e.toJson()).toList(),
+    'deals': deals.map((e) => e.toJson()).toList(),
+    'appointments': appointments.map((e) => e.toJson()).toList(),
+    'callbacks': callbacks.map((e) => e.toJson()).toList(),
+    'agents': agents.map((e) => e.toJson()).toList(),
+    'devices': devices.map((e) => e.toJson()).toList(),
+    'routingRules': routingRules.map((e) => e.toJson()).toList(),
+    'handoffs': handoffs.map((e) => e.toJson()).toList(),
+    'dnc': dnc.map((e) => e.toJson()).toList(),
+    'smsSuppression': smsSuppression,
+    'integrations': integrations.map((e) => e.toJson()).toList(),
+    'notifications': notifications.map((e) => e.toJson()).toList(),
+    'businessHours': businessHours.toJson(),
+    'settings': settings,
+    'syncJournal': syncJournal,
+    'activityLog': activityLog,
+  };
 
   static List<T> _list<T>(dynamic v, T Function(Map<String, dynamic>) f) =>
       (v as List? ?? [])
@@ -154,41 +153,42 @@ class AppState {
           .toList();
 
   factory AppState.fromJson(Map<String, dynamic> j) => AppState(
-        contacts: _list(j['contacts'], Contact.fromJson),
-        companies: _list(j['companies'], Company.fromJson),
-        numbers: _list(j['numbers'], PowerlineNumber.fromJson),
-        conversations: _list(j['conversations'], Conversation.fromJson),
-        messages: _list(j['messages'], Message.fromJson),
-        calls: _list(j['calls'], CallRecord.fromJson),
-        voicemails: _list(j['voicemails'], Voicemail.fromJson),
-        campaigns: _list(j['campaigns'], Campaign.fromJson),
-        deals: _list(j['deals'], PipelineDeal.fromJson),
-        appointments: _list(j['appointments'], Appointment.fromJson),
-        callbacks: _list(j['callbacks'], CallbackTask.fromJson),
-        agents: _list(j['agents'], AiAgent.fromJson),
-        devices: _list(j['devices'], DeviceRecord.fromJson),
-        routingRules: _list(j['routingRules'], RoutingRule.fromJson),
-        handoffs: _list(j['handoffs'], HandoffEvent.fromJson),
-        dnc: _list(j['dnc'], DncRecord.fromJson),
-        smsSuppression: (j['smsSuppression'] as List? ?? [])
-            .map((e) => e.toString())
-            .toList(),
-        integrations: _list(j['integrations'], IntegrationCard.fromJson),
-        notifications: _list(j['notifications'], AppNotification.fromJson),
-        businessHours: j['businessHours'] == null
-            ? const BusinessHours()
-            : BusinessHours.fromJson(
-                Map<String, dynamic>.from(j['businessHours'] as Map),
-              ),
-        settings: (j['settings'] as Map? ?? {}).map(
-          (k, v) => MapEntry(k.toString(), v.toString()),
-        ),
-        syncJournal: (j['syncJournal'] as List? ?? [])
-            .map((e) => Map<String, dynamic>.from(e as Map))
-            .toList(),
-        activityLog:
-            (j['activityLog'] as List? ?? []).map((e) => e.toString()).toList(),
-      );
+    contacts: _list(j['contacts'], Contact.fromJson),
+    companies: _list(j['companies'], Company.fromJson),
+    numbers: _list(j['numbers'], PowerlineNumber.fromJson),
+    conversations: _list(j['conversations'], Conversation.fromJson),
+    messages: _list(j['messages'], Message.fromJson),
+    calls: _list(j['calls'], CallRecord.fromJson),
+    voicemails: _list(j['voicemails'], Voicemail.fromJson),
+    campaigns: _list(j['campaigns'], Campaign.fromJson),
+    deals: _list(j['deals'], PipelineDeal.fromJson),
+    appointments: _list(j['appointments'], Appointment.fromJson),
+    callbacks: _list(j['callbacks'], CallbackTask.fromJson),
+    agents: _list(j['agents'], AiAgent.fromJson),
+    devices: _list(j['devices'], DeviceRecord.fromJson),
+    routingRules: _list(j['routingRules'], RoutingRule.fromJson),
+    handoffs: _list(j['handoffs'], HandoffEvent.fromJson),
+    dnc: _list(j['dnc'], DncRecord.fromJson),
+    smsSuppression: (j['smsSuppression'] as List? ?? [])
+        .map((e) => e.toString())
+        .toList(),
+    integrations: _list(j['integrations'], IntegrationCard.fromJson),
+    notifications: _list(j['notifications'], AppNotification.fromJson),
+    businessHours: j['businessHours'] == null
+        ? const BusinessHours()
+        : BusinessHours.fromJson(
+            Map<String, dynamic>.from(j['businessHours'] as Map),
+          ),
+    settings: (j['settings'] as Map? ?? {}).map(
+      (k, v) => MapEntry(k.toString(), v.toString()),
+    ),
+    syncJournal: (j['syncJournal'] as List? ?? [])
+        .map((e) => Map<String, dynamic>.from(e as Map))
+        .toList(),
+    activityLog: (j['activityLog'] as List? ?? [])
+        .map((e) => e.toString())
+        .toList(),
+  );
 }
 
 class AppRepository {
@@ -326,13 +326,15 @@ class AppRepository {
     final conv = Conversation(
       id: newId('cv'),
       remoteE164: remoteE164,
-      contactId: contactId ??
+      contactId:
+          contactId ??
           _state.contacts
               .where((c) => c.phones.any((p) => p.e164 == remoteE164))
               .map((c) => c.id)
               .firstOrNull,
-      powerlineNumberId:
-          _state.numbers.isEmpty ? null : _state.numbers.first.id,
+      powerlineNumberId: _state.numbers.isEmpty
+          ? null
+          : _state.numbers.first.id,
       lastMessageAt: DateTime.now(),
     );
     _update(
@@ -375,8 +377,9 @@ class AppRepository {
   void updateConversation(Conversation c) {
     _update(
       _state.copyWith(
-        conversations:
-            _state.conversations.map((x) => x.id == c.id ? c : x).toList(),
+        conversations: _state.conversations
+            .map((x) => x.id == c.id ? c : x)
+            .toList(),
       ),
     );
   }
@@ -518,8 +521,9 @@ class AppRepository {
   void updateIntegration(IntegrationCard c) {
     _update(
       _state.copyWith(
-        integrations:
-            _state.integrations.map((x) => x.id == c.id ? c : x).toList(),
+        integrations: _state.integrations
+            .map((x) => x.id == c.id ? c : x)
+            .toList(),
       ),
       log: 'integration ${c.provider}: ${c.state.name}',
     );

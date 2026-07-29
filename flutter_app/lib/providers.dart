@@ -323,8 +323,8 @@ class CallSessionController extends Notifier<CallSession?> {
 
 final callSessionProvider =
     NotifierProvider<CallSessionController, CallSession?>(
-  CallSessionController.new,
-);
+      CallSessionController.new,
+    );
 
 // ---- Multi-device ring simulation ----
 class RingSimEvent {
@@ -371,8 +371,8 @@ class DevicePresenceSimulator extends Notifier<List<RingSimEvent>> {
 
 final ringSimProvider =
     NotifierProvider<DevicePresenceSimulator, List<RingSimEvent>>(
-  DevicePresenceSimulator.new,
-);
+      DevicePresenceSimulator.new,
+    );
 
 // ---- Global search ----
 class SearchHit {

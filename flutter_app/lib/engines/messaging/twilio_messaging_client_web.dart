@@ -22,8 +22,8 @@ class _WebTwilioMessagingClient implements TwilioMessagingClient {
       requestHeaders: {'Content-Type': 'application/json'},
       sendData: jsonEncode({'to': to, 'from': from, 'body': body}),
     );
-    final payload = jsonDecode(response.responseText ?? '{}')
-        as Map<String, dynamic>;
+    final payload =
+        jsonDecode(response.responseText ?? '{}') as Map<String, dynamic>;
     final sid = payload['sid']?.toString();
     if (sid == null || sid.isEmpty) {
       throw const FormatException('SMS service did not return a message SID.');

@@ -65,8 +65,8 @@ class _VoicemailScreenState extends ConsumerState<VoicemailScreen> {
           .where(
             (v) =>
                 v.transcript.toLowerCase().contains(
-                      transcriptFilter.toLowerCase(),
-                    ) ||
+                  transcriptFilter.toLowerCase(),
+                ) ||
                 v.remoteE164.contains(transcriptFilter),
           )
           .toList();
@@ -273,12 +273,12 @@ class _VoicemailScreenState extends ConsumerState<VoicemailScreen> {
                         trailing: TextButton(
                           onPressed: () =>
                               ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Greeting recording requires a live provider + microphone flow (not in demo).',
+                                const SnackBar(
+                                  content: Text(
+                                    'Greeting recording requires a live provider + microphone flow (not in demo).',
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
                           child: const Text('Change'),
                         ),
                       ),

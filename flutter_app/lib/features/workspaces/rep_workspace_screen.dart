@@ -26,36 +26,47 @@ class _RepWorkspaceScreenState extends ConsumerState<RepWorkspaceScreen> {
     final state = stateOf(ref);
     final roofing = view == _RepView.roofing;
     final campaigns = state.campaigns.where((campaign) {
-      final haystack =
-          '${campaign.name} ${campaign.industry} ${campaign.offer}'.toLowerCase();
+      final haystack = '${campaign.name} ${campaign.industry} ${campaign.offer}'
+          .toLowerCase();
       return roofing
           ? haystack.contains('roof') || haystack.contains('restoration')
           : haystack.contains('data') ||
-              haystack.contains('owner') ||
-              haystack.contains('lead');
+                haystack.contains('owner') ||
+                haystack.contains('lead');
     }).toList();
     final campaignIds = campaigns.map((campaign) => campaign.id).toSet();
     final calls = state.calls
-        .where((call) => call.campaignId == null ||
-            campaignIds.isEmpty ||
-            campaignIds.contains(call.campaignId))
+        .where(
+          (call) =>
+              call.campaignId == null ||
+              campaignIds.isEmpty ||
+              campaignIds.contains(call.campaignId),
+        )
         .toList();
     final deals = state.deals
-        .where((deal) =>
-            deal.campaignId == null || campaignIds.contains(deal.campaignId))
+        .where(
+          (deal) =>
+              deal.campaignId == null || campaignIds.contains(deal.campaignId),
+        )
         .toList();
     final appointments = state.appointments
-        .where((appointment) =>
-            appointment.campaignId == null ||
-            campaignIds.contains(appointment.campaignId))
+        .where(
+          (appointment) =>
+              appointment.campaignId == null ||
+              campaignIds.contains(appointment.campaignId),
+        )
         .toList();
     final answered = calls.where((call) => call.answeredAt != null).length;
-    final aiCalls =
-        calls.where((call) => call.agentKind == AgentKind.ai).length;
+    final aiCalls = calls
+        .where((call) => call.agentKind == AgentKind.ai)
+        .length;
     final pipeline = deals.fold<double>(0, (sum, deal) => sum + deal.value);
     final conversations = [...state.conversations]
-      ..sort((a, b) => (b.lastMessageAt ?? DateTime(0))
-          .compareTo(a.lastMessageAt ?? DateTime(0)));
+      ..sort(
+        (a, b) => (b.lastMessageAt ?? DateTime(0)).compareTo(
+          a.lastMessageAt ?? DateTime(0),
+        ),
+      );
 
     return ListView(
       padding: const EdgeInsets.all(20),
@@ -92,8 +103,7 @@ class _RepWorkspaceScreenState extends ConsumerState<RepWorkspaceScreen> {
                 ),
               ],
               selected: {view},
-              onSelectionChanged: (value) =>
-                  setState(() => view = value.first),
+              onSelectionChanged: (value) => setState(() => view = value.first),
             ),
           ],
         ),
@@ -110,8 +120,8 @@ class _RepWorkspaceScreenState extends ConsumerState<RepWorkspaceScreen> {
               roofing
                   ? appointments.length
                   : deals
-                      .where((deal) => deal.stage != PipelineStage.newLead)
-                      .length,
+                        .where((deal) => deal.stage != PipelineStage.newLead)
+                        .length,
               roofing ? Icons.event_available : Icons.verified_outlined,
             ),
             _MoneyMetric('Open pipeline', pipeline),
@@ -168,14 +178,14 @@ class _Panel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: PowerlineColors.panel,
-          border: Border.all(color: PowerlineColors.border),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: child,
-      );
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: PowerlineColors.panel,
+      border: Border.all(color: PowerlineColors.border),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: child,
+  );
 }
 
 class _Metric extends StatelessWidget {
@@ -186,53 +196,21 @@ class _Metric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-        width: 176,
-        child: _Panel(
-          child: Row(
-            children: [
-              Icon(icon, color: PowerlineColors.cobalt),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$value',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: PowerlineColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      );
-}
-
-class _MoneyMetric extends StatelessWidget {
-  final String label;
-  final double value;
-  const _MoneyMetric(this.label, this.value);
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-        width: 205,
-        child: _Panel(
-          child: Column(
+    width: 176,
+    child: _Panel(
+      child: Row(
+        children: [
+          Icon(icon, color: PowerlineColors.cobalt),
+          const SizedBox(width: 12),
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '\$${value.toStringAsFixed(0)}',
-                style:
-                    const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                '$value',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               Text(
                 label,
@@ -243,8 +221,39 @@ class _MoneyMetric extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
+}
+
+class _MoneyMetric extends StatelessWidget {
+  final String label;
+  final double value;
+  const _MoneyMetric(this.label, this.value);
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 205,
+    child: _Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '\$${value.toStringAsFixed(0)}',
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+          ),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              color: PowerlineColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _QueuePanel extends StatelessWidget {
@@ -329,61 +338,60 @@ class _ActivityPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _Panel(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
           children: [
-            Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Recent messages',
-                    style: TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () => context.go('/messages'),
-                  child: const Text('Open inbox'),
-                ),
-              ],
-            ),
-            for (final conversation in conversations)
-              Builder(
-                builder: (context) {
-                  final last = messages
-                      .where((m) => m.conversationId == conversation.id)
-                      .sortedBy((m) => m.createdAt)
-                      .lastOrNull;
-                  final name = contacts
-                          .firstWhereOrNull(
-                            (c) => c.id == conversation.contactId,
-                          )
-                          ?.displayName ??
-                      conversation.remoteE164;
-                  return ListTile(
-                    dense: true,
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.chat_bubble_outline, size: 17),
-                    title: Text(name, maxLines: 1),
-                    subtitle: Text(
-                      last?.body ?? 'No messages yet',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    trailing: conversation.unreadCount == 0
-                        ? null
-                        : CircleAvatar(
-                            radius: 10,
-                            child: Text(
-                              '${conversation.unreadCount}',
-                              style: const TextStyle(fontSize: 9),
-                            ),
-                          ),
-                  );
-                },
+            const Expanded(
+              child: Text(
+                'Recent messages',
+                style: TextStyle(fontWeight: FontWeight.w800),
               ),
+            ),
+            TextButton(
+              onPressed: () => context.go('/messages'),
+              child: const Text('Open inbox'),
+            ),
           ],
         ),
-      );
+        for (final conversation in conversations)
+          Builder(
+            builder: (context) {
+              final last = messages
+                  .where((m) => m.conversationId == conversation.id)
+                  .sortedBy((m) => m.createdAt)
+                  .lastOrNull;
+              final name =
+                  contacts
+                      .firstWhereOrNull((c) => c.id == conversation.contactId)
+                      ?.displayName ??
+                  conversation.remoteE164;
+              return ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.chat_bubble_outline, size: 17),
+                title: Text(name, maxLines: 1),
+                subtitle: Text(
+                  last?.body ?? 'No messages yet',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                trailing: conversation.unreadCount == 0
+                    ? null
+                    : CircleAvatar(
+                        radius: 10,
+                        child: Text(
+                          '${conversation.unreadCount}',
+                          style: const TextStyle(fontSize: 9),
+                        ),
+                      ),
+              );
+            },
+          ),
+      ],
+    ),
+  );
 }
 
 class _PlaybookPanel extends StatelessWidget {
@@ -403,7 +411,10 @@ class _PlaybookPanel extends StatelessWidget {
             ('Qualify the buyer', 'Industry, geography, volume, and use case.'),
             ('Prove the records', 'Show fields, recency, and suppression.'),
             ('Price the batch', '25k+, 60k+, and 105k+ tiers.'),
-            ('Book the next order', 'Never end without volume and delivery date.'),
+            (
+              'Book the next order',
+              'Never end without volume and delivery date.',
+            ),
           ];
     return _Panel(
       child: Column(

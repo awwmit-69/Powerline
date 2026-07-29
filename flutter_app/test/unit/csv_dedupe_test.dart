@@ -6,14 +6,13 @@ int _n = 0;
 String idGen() => 'gen_${_n++}';
 
 Contact c(String first, String last, {String? phone}) => Contact(
-      id: 'x${_n++}',
-      firstName: first,
-      lastName: last,
-      phones:
-          phone == null ? const [] : [PhoneEntry(label: 'mobile', e164: phone)],
-      createdAt: DateTime(2026),
-      updatedAt: DateTime(2026),
-    );
+  id: 'x${_n++}',
+  firstName: first,
+  lastName: last,
+  phones: phone == null ? const [] : [PhoneEntry(label: 'mobile', e164: phone)],
+  createdAt: DateTime(2026),
+  updatedAt: DateTime(2026),
+);
 
 void main() {
   test('CSV round-trip preserves phone as string', () {

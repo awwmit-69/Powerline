@@ -52,17 +52,17 @@ class AgentSimulator {
     ];
     final callerLines = switch (persona) {
       SimPersona.interested => [
-          'Hi, yes I heard about the inspection.',
-          'Tuesday works, yes.',
-        ],
+        'Hi, yes I heard about the inspection.',
+        'Tuesday works, yes.',
+      ],
       SimPersona.priceShopper => [
-          'How much does this cost?',
-          'OK, Thursday could work, yes.',
-        ],
+        'How much does this cost?',
+        'OK, Thursday could work, yes.',
+      ],
       SimPersona.wantsHuman => ['I would rather talk to a human please.'],
       SimPersona.notInterested => [
-          'Not interested, please remove me from your list.',
-        ],
+        'Not interested, please remove me from your list.',
+      ],
     };
 
     var booked = false;
@@ -90,10 +90,10 @@ class AgentSimulator {
     final outcome = dnc
         ? 'dnc-requested'
         : escalated
-            ? 'escalated-to-human'
-            : booked
-                ? 'appointment-booked'
-                : 'follow-up-needed';
+        ? 'escalated-to-human'
+        : booked
+        ? 'appointment-booked'
+        : 'follow-up-needed';
     transcript.add(SimTurn('system', 'Outcome: $outcome (simulated)'));
     return SimResult(
       transcript: transcript,

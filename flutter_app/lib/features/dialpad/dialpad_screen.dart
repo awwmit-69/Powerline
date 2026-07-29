@@ -29,9 +29,8 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
 
   void _append(String d) => setState(() => digits += d);
   void _backspace() => setState(
-        () => digits =
-            digits.isEmpty ? '' : digits.substring(0, digits.length - 1),
-      );
+    () => digits = digits.isEmpty ? '' : digits.substring(0, digits.length - 1),
+  );
 
   Future<void> _paste() async {
     final data = await Clipboard.getData(Clipboard.kTextPlain);
@@ -46,19 +45,23 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
     final normalized = PhoneNumberUtil.normalize(digits);
     final matches = digits.length >= 3
         ? s.contacts
-            .where(
-              (c) =>
-                  c.phones.any(
-                    (p) =>
-                        p.e164.contains(digits.replaceAll(RegExp(r'\D'), '')),
-                  ) ||
-                  c.displayName.toLowerCase().contains(digits.toLowerCase()),
-            )
-            .take(4)
-            .toList()
+              .where(
+                (c) =>
+                    c.phones.any(
+                      (p) =>
+                          p.e164.contains(digits.replaceAll(RegExp(r'\D'), '')),
+                    ) ||
+                    c.displayName.toLowerCase().contains(digits.toLowerCase()),
+              )
+              .take(4)
+              .toList()
         : <Contact>[];
-    final recents =
-        s.calls.take(5).map((c) => c.remoteE164).toSet().take(4).toList();
+    final recents = s.calls
+        .take(5)
+        .map((c) => c.remoteE164)
+        .toSet()
+        .take(4)
+        .toList();
     callerIdNumberId ??=
         s.settings['defaultCallerId'] ?? s.numbers.firstOrNull?.id;
 
@@ -214,10 +217,7 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                       const SizedBox(height: 8),
                       SegmentedButton<String>(
                         segments: const [
-                          ButtonSegment(
-                            value: 'twilio',
-                            label: Text('Twilio'),
-                          ),
+                          ButtonSegment(value: 'twilio', label: Text('Twilio')),
                           ButtonSegment(value: 'demo', label: Text('Demo')),
                           ButtonSegment(
                             value: 'external',
@@ -241,15 +241,16 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                           backgroundColor: PowerlineColors.stateConnected,
                           minimumSize: const Size(140, 48),
                         ),
-                        onPressed:
-                            normalized == null ? null : () => _call(normalized),
+                        onPressed: normalized == null
+                            ? null
+                            : () => _call(normalized),
                         icon: const Icon(Icons.call),
                         label: Text(
                           mode == 'twilio'
                               ? 'Call live'
                               : mode == 'demo'
-                                  ? 'Demo call'
-                                  : 'OS dialer',
+                              ? 'Demo call'
+                              : 'OS dialer',
                         ),
                       ),
                       OutlinedButton.icon(
@@ -326,9 +327,9 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                   Text(
                     mode == 'twilio'
                         ? 'Live trial calling via +1 605-205-8454. Calls are currently '
-                            'restricted to the verified test destination. Emergency calls are NOT possible.'
+                              'restricted to the verified test destination. Emergency calls are NOT possible.'
                         : 'Demo mode: calls are simulated locally. No real person is contacted. '
-                            'Emergency calls are NOT possible.',
+                              'Emergency calls are NOT possible.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 11,
@@ -371,9 +372,9 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
             .placeLiveCall(e164, fromNumberId: callerIdNumberId);
       } catch (error) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Live call failed: $error')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Live call failed: $error')));
         }
       }
     } else {

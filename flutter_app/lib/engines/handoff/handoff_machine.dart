@@ -51,7 +51,7 @@ class HandoffMachine {
   String whisperSummary = '';
 
   HandoffMachine({HandoffState initial = HandoffState.humanActive})
-      : _state = initial;
+    : _state = initial;
 
   HandoffState get state => _state;
 

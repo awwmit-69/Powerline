@@ -111,8 +111,8 @@ AppState buildDemoSeed() {
         tags: i >= 40
             ? const ['truuowner-buyer', 'data-sales']
             : i % 5 == 0
-                ? const ['storm-lead']
-                : const ['inbound'],
+            ? const ['storm-lead']
+            : const ['inbound'],
         timeZone: i % 2 == 0 ? 'America/Chicago' : 'America/New_York',
         dnc: i == 24 || i == 49,
         smsOptOut: i == 29,

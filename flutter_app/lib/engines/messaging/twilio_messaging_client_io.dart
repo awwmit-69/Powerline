@@ -29,7 +29,9 @@ class _IoTwilioMessagingClient implements TwilioMessagingClient {
       final payload = jsonDecode(payloadText) as Map<String, dynamic>;
       final sid = payload['sid']?.toString();
       if (sid == null || sid.isEmpty) {
-        throw const FormatException('SMS service did not return a message SID.');
+        throw const FormatException(
+          'SMS service did not return a message SID.',
+        );
       }
       return sid;
     } finally {

@@ -87,14 +87,12 @@ class _NativeTwilioPlatform implements TwilioPlatform {
   void hangup() => unawaited(_channel.invokeMethod<void>('hangup'));
 
   @override
-  void mute(bool muted) => unawaited(
-        _channel.invokeMethod<void>('mute', {'muted': muted}),
-      );
+  void mute(bool muted) =>
+      unawaited(_channel.invokeMethod<void>('mute', {'muted': muted}));
 
   @override
-  void sendDigits(String digits) => unawaited(
-        _channel.invokeMethod<void>('sendDigits', {'digits': digits}),
-      );
+  void sendDigits(String digits) =>
+      unawaited(_channel.invokeMethod<void>('sendDigits', {'digits': digits}));
 
   @override
   void dispose() {

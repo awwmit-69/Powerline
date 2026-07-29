@@ -143,7 +143,8 @@ class _GeneralPanel extends ConsumerWidget {
                 ),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
-                  initialValue: s.settings['defaultCallerId'] ??
+                  initialValue:
+                      s.settings['defaultCallerId'] ??
                       s.numbers.firstOrNull?.id,
                   decoration: const InputDecoration(
                     labelText: 'Default caller ID',
@@ -165,7 +166,8 @@ class _GeneralPanel extends ConsumerWidget {
         Card(
           child: SwitchListTile(
             title: const Text('Ring this device for inbound calls'),
-            value: s.devices
+            value:
+                s.devices
                     .where((d) => d.isThisDevice)
                     .firstOrNull
                     ?.ringEnabled ??
@@ -290,14 +292,13 @@ class _NumbersPanel extends ConsumerWidget {
   }
 
   Widget _cap(String label, bool on) => Chip(
-        avatar: Icon(
-          on ? Icons.check : Icons.close,
-          size: 12,
-          color:
-              on ? PowerlineColors.stateConnected : PowerlineColors.stateFailed,
-        ),
-        label: Text(label, style: const TextStyle(fontSize: 10)),
-      );
+    avatar: Icon(
+      on ? Icons.check : Icons.close,
+      size: 12,
+      color: on ? PowerlineColors.stateConnected : PowerlineColors.stateFailed,
+    ),
+    label: Text(label, style: const TextStyle(fontSize: 10)),
+  );
 }
 
 class _RoutingPanel extends ConsumerWidget {
@@ -404,8 +405,8 @@ class _RoutingPanel extends ConsumerWidget {
                                 .isEmpty
                             ? 'Closed'
                             : (s.businessHours.weekly[day.$1] ?? const [])
-                                .map((w) => '${w[0]}:00–${w[1]}:00')
-                                .join(', '),
+                                  .map((w) => '${w[0]}:00–${w[1]}:00')
+                                  .join(', '),
                         style: const TextStyle(
                           color: PowerlineColors.textSecondary,
                         ),
@@ -605,24 +606,24 @@ class _CompliancePanel extends ConsumerWidget {
   }
 
   Widget _kv(String k, String v) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 190,
-              child: Text(
-                k,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: PowerlineColors.textSecondary,
-                ),
-              ),
+    padding: const EdgeInsets.symmetric(vertical: 2),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 190,
+          child: Text(
+            k,
+            style: const TextStyle(
+              fontSize: 11,
+              color: PowerlineColors.textSecondary,
             ),
-            Expanded(child: Text(v, style: const TextStyle(fontSize: 12))),
-          ],
+          ),
         ),
-      );
+        Expanded(child: Text(v, style: const TextStyle(fontSize: 12))),
+      ],
+    ),
+  );
 }
 
 class _DataPanel extends ConsumerWidget {

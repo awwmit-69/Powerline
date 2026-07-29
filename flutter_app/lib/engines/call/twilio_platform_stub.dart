@@ -4,16 +4,15 @@ TwilioPlatform createTwilioPlatform() => _UnsupportedTwilioPlatform();
 
 class _UnsupportedTwilioPlatform implements TwilioPlatform {
   Never _unsupported() => throw UnsupportedError(
-        'Twilio browser calling is available on PowerLine Web only.',
-      );
+    'Twilio browser calling is available on PowerLine Web only.',
+  );
 
   @override
   Future<void> initialize(
     String tokenUrl,
     TwilioStateCallback onState,
     TwilioErrorCallback onError,
-  ) async =>
-      _unsupported();
+  ) async => _unsupported();
   @override
   Future<String> placeCall(String destination) async => _unsupported();
   @override

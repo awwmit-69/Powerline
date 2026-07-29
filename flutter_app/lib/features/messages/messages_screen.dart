@@ -56,7 +56,8 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
       }).toList();
     }
     selectedConvId ??= convs.firstOrNull?.id;
-    final selected = convs.where((c) => c.id == selectedConvId).firstOrNull ??
+    final selected =
+        convs.where((c) => c.id == selectedConvId).firstOrNull ??
         s.conversations.where((c) => c.id == selectedConvId).firstOrNull;
 
     final listPanel = Column(
@@ -295,9 +296,9 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
     } catch (error) {
       repo.updateMessageState(msgId, MessageState.failed);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('SMS failed: $error')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('SMS failed: $error')));
       }
     }
     Future<void>.delayed(const Duration(seconds: 4), () => sub.cancel());
