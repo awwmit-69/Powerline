@@ -31,7 +31,7 @@ void main() {
     expect(s.conversations.length, greaterThanOrEqualTo(30));
     expect(s.calls.length, greaterThanOrEqualTo(60));
     expect(s.campaigns.length, 5);
-    expect(s.agents.length, 5);
+    expect(s.agents.length, 6);
     for (final c in s.contacts) {
       for (final p in c.phones) {
         expect(
