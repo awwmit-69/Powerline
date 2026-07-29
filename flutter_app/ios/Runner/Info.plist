@@ -12,6 +12,13 @@
     <key>LSRequiresIPhoneOS</key><true/>
     <key>UILaunchStoryboardName</key><string>LaunchScreen</string>
     <key>UIApplicationSupportsIndirectInputEvents</key><true/>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>PowerLine needs microphone access so you can make and receive business calls.</string>
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>audio</string>
+        <string>voip</string>
+    </array>
     <!-- tel: URL scheme so the dialpad can hand off to the OS phone app -->
     <key>LSApplicationQueriesSchemes</key>
     <array><string>tel</string></array>
