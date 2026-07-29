@@ -25,7 +25,7 @@ import 'engines/voicemail/voicemail_providers.dart';
 import 'package:collection/collection.dart';
 
 final snapshotStoreProvider = Provider<SnapshotStore>(
-  (ref) => kIsWeb ? MemorySnapshotStore() : FileSnapshotStore(),
+  (ref) => kIsWeb ? SharedPreferencesSnapshotStore() : FileSnapshotStore(),
 );
 
 final appRepositoryProvider = Provider<AppRepository>((ref) {
@@ -76,6 +76,12 @@ final demoMessagingProvider = Provider<DemoMessagingProvider>((ref) {
   final p = DemoMessagingProvider();
   ref.onDispose(() => p.dispose());
   return p;
+});
+
+final twilioMessagingProvider = Provider<TwilioMessagingProvider>((ref) {
+  final provider = TwilioMessagingProvider();
+  ref.onDispose(() => provider.dispose());
+  return provider;
 });
 
 final transcriptionProvider = Provider<TranscriptionProvider>(

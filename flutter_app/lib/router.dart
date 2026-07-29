@@ -12,6 +12,7 @@ import 'features/messages/messages_screen.dart';
 import 'features/settings/settings_screen.dart';
 import 'features/shell/app_shell.dart';
 import 'features/voicemail/voicemail_screen.dart';
+import 'features/workspaces/rep_workspace_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -22,6 +23,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             AppShell(location: state.uri.path, child: child),
         routes: [
           GoRoute(path: '/home', builder: (c, s) => const HomeScreen()),
+          GoRoute(
+            path: '/workspaces',
+            builder: (c, s) => const RepWorkspaceScreen(),
+          ),
           GoRoute(path: '/dialpad', builder: (c, s) => const DialpadScreen()),
           GoRoute(path: '/messages', builder: (c, s) => const MessagesScreen()),
           GoRoute(path: '/calls', builder: (c, s) => const CallsScreen()),
