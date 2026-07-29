@@ -1,0 +1,31 @@
+name: Format Expanded Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Format Dart source
+        working-directory: flutter_app
+        run: dart format lib test integration_test
+      - name: Commit formatter output
+        run: |
+          if git diff --quiet; then
+            echo "Source is already formatted."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add flutter_app/lib flutter_app/test flutter_app/integration_test
+          git commit -m "Format expanded PowerLine release"
+          git push
