@@ -14,10 +14,11 @@ jobs:
       - name: Derive Twilio account identity
         env:
           API_KEY_SECRET: ${{ secrets.TWILIOPASSWORD }}
+          API_VALUE: ${{ secrets.TWILIO_API }}
           FROM_NUMBER: ${{ secrets.TWILIO_FROM_NUMBER }}
           TEST_NUMBER: ${{ secrets.TWILIO_TEST_NUMBER }}
         run: |
-          for key in API_KEY_SECRET FROM_NUMBER TEST_NUMBER; do
+          for key in API_KEY_SECRET API_VALUE FROM_NUMBER TEST_NUMBER; do
             if [ -z "${!key}" ]; then
               echo "::error::$key is not configured"
               exit 1
@@ -52,30 +53,43 @@ jobs:
       - name: Originate Data Rep test call
         env:
           API_KEY_SECRET: ${{ secrets.TWILIOPASSWORD }}
+          API_VALUE: ${{ secrets.TWILIO_API }}
           FROM_NUMBER: ${{ secrets.TWILIO_FROM_NUMBER }}
           TEST_NUMBER: ${{ secrets.TWILIO_TEST_NUMBER }}
         run: |
           API_KEY_SECRET="$(printf '%s' "$API_KEY_SECRET" | tr -d '\r\n\"')"
+          API_VALUE="$(printf '%s' "$API_VALUE" | tr -d '\r\n\"')"
           FROM_NUMBER="$(printf '%s' "$FROM_NUMBER" | tr -d '[:space:]\"')"
           TEST_NUMBER="$(printf '%s' "$TEST_NUMBER" | tr -d '[:space:]\"')"
-          response="$(
-            curl --silent --show-error \
-              --user "$API_KEY_SID:$API_KEY_SECRET" \
-              --request POST \
-              "https://api.twilio.com/2010-04-01/Accounts/$ACCOUNT_SID/Calls.json" \
-              --data-urlencode "From=$FROM_NUMBER" \
-              --data-urlencode "To=$TEST_NUMBER" \
-              --data-urlencode 'Twiml=<Response><Say voice="Polly.Joanna">Hello Amit. This is the PowerLine Data Rep test agent. You cannot sell if you are targeting the wrong audience. TruuOwner helps sales teams qualify the right homeowners, protect every cent spent on outreach, and turn clean records into real conversations. Your live Twilio API calling route is working.</Say></Response>'
-          )"
-          RESPONSE="$response" python3 - <<'PY'
+          credentials=(
+            "$API_KEY_SID:$API_KEY_SECRET"
+            "$API_KEY_SID:$API_VALUE"
+            "$ACCOUNT_SID:$API_KEY_SECRET"
+            "$ACCOUNT_SID:$API_VALUE"
+          )
+          for credential in "${credentials[@]}"; do
+            response="$(
+              curl --silent --show-error \
+                --user "$credential" \
+                --request POST \
+                "https://api.twilio.com/2010-04-01/Accounts/$ACCOUNT_SID/Calls.json" \
+                --data-urlencode "From=$FROM_NUMBER" \
+                --data-urlencode "To=$TEST_NUMBER" \
+                --data-urlencode 'Twiml=<Response><Say voice="Polly.Joanna">Hello Amit. This is the PowerLine Data Rep test agent. You cannot sell if you are targeting the wrong audience. TruuOwner helps sales teams qualify the right homeowners, protect every cent spent on outreach, and turn clean records into real conversations. Your live Twilio API calling route is working.</Say></Response>'
+            )"
+            if RESPONSE="$response" python3 - <<'PY'
           import json
           import os
           import sys
-
           payload = json.loads(os.environ["RESPONSE"])
           if payload.get("sid"):
               print(f"Call accepted: {payload['sid']} ({payload.get('status', 'queued')})")
               sys.exit(0)
-          print(f"Twilio rejected the call: {payload.get('message', 'unknown error')}")
           sys.exit(1)
           PY
+            then
+              exit 0
+            fi
+          done
+          echo "::error::Twilio rejected every configured API credential without exposing secret values"
+          exit 1
