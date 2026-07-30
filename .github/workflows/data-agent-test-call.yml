@@ -4,13 +4,15 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   call:
     name: Call verified Data Rep test number
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Derive Twilio account identity
         env:
           API_KEY_SECRET: ${{ secrets.TWILIOPASSWORD }}
@@ -50,6 +52,80 @@ jobs:
           print(f"API_KEY_SID={api_key_sid}")
           PY
 
+      - name: Generate Arpita bb Data Rep audio
+        env:
+          ELEVENLABS_KEY: ${{ secrets.ELEVENLABS }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import pathlib
+          import urllib.request
+
+          key = os.environ.get("ELEVENLABS_KEY", "").strip().strip('"')
+          if not key:
+              raise SystemExit("::error::ELEVENLABS secret is not configured")
+          request = urllib.request.Request(
+              "https://api.elevenlabs.io/v1/voices",
+              headers={"xi-api-key": key, "Accept": "application/json"},
+          )
+          with urllib.request.urlopen(request) as response:
+              voices = json.load(response).get("voices", [])
+          matches = [
+              voice for voice in voices
+              if "arpita" in str(voice.get("name", "")).lower()
+              or "arpa" in str(voice.get("name", "")).lower()
+          ]
+          if not matches:
+              names = ", ".join(sorted(str(v.get("name", "")) for v in voices))
+              raise SystemExit(f"::error::Could not find Arpita bb in ElevenLabs. Available voice names: {names}")
+          voice_id = matches[0]["voice_id"]
+          text = (
+              "Hello Amit. This is your PowerLine Data Rep, using Arpita's voice. "
+              "You cannot sell if you are targeting the wrong audience. "
+              "TruuOwner helps sales teams qualify the right homeowners, protect every cent spent on outreach, "
+              "and turn clean records into real conversations. The custom ElevenLabs voice is now connected."
+          )
+          body = json.dumps({
+              "text": text,
+              "model_id": "eleven_multilingual_v2",
+              "voice_settings": {
+                  "stability": 0.55,
+                  "similarity_boost": 0.82,
+                  "style": 0.25,
+                  "use_speaker_boost": True,
+              },
+          }).encode()
+          request = urllib.request.Request(
+              f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}",
+              data=body,
+              method="POST",
+              headers={
+                  "xi-api-key": key,
+                  "Content-Type": "application/json",
+                  "Accept": "audio/mpeg",
+              },
+          )
+          with urllib.request.urlopen(request) as response:
+              audio = response.read()
+          path = pathlib.Path("voice-assets/arpita-data-agent-test.mp3")
+          path.parent.mkdir(parents=True, exist_ok=True)
+          path.write_bytes(audio)
+          print(f"Generated Arpita bb audio ({len(audio)} bytes)")
+          PY
+
+      - name: Publish generated voice asset
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add voice-assets/arpita-data-agent-test.mp3
+          if git diff --cached --quiet; then
+            echo "Voice asset already current"
+          else
+            git commit -m "Generate Arpita bb Data Rep test audio"
+            git push
+          fi
+
       - name: Originate Data Rep test call
         env:
           API_KEY_SECRET: ${{ secrets.TWILIOPASSWORD }}
@@ -75,7 +151,7 @@ jobs:
                 "https://api.twilio.com/2010-04-01/Accounts/$ACCOUNT_SID/Calls.json" \
                 --data-urlencode "From=$FROM_NUMBER" \
                 --data-urlencode "To=$TEST_NUMBER" \
-                --data-urlencode 'Twiml=<Response><Say voice="Polly.Joanna">Hello Amit. This is the PowerLine Data Rep test agent. You cannot sell if you are targeting the wrong audience. TruuOwner helps sales teams qualify the right homeowners, protect every cent spent on outreach, and turn clean records into real conversations. Your live Twilio API calling route is working.</Say></Response>'
+                --data-urlencode 'Twiml=<Response><Play>https://raw.githubusercontent.com/awwmit-69/Powerline/main/voice-assets/arpita-data-agent-test.mp3?run=${{ github.run_id }}</Play></Response>'
             )"
             if RESPONSE="$response" python3 - <<'PY'
           import json
