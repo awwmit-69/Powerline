@@ -11,6 +11,87 @@ jobs:
     name: Call verified Data Rep test number
     runs-on: ubuntu-latest
     steps:
+      - name: Derive Twilio account identity
+        env:
+          API_KEY_SECRET: ${{ secrets.TWILIOPASSWORD }}
+          FROM_NUMBER: ${{ secrets.TWILIO_FROM_NUMBER }}
+          TEST_NUMBER: ${{ secrets.TWILIO_TEST_NUMBER }}
+        run: |
+          for key in API_KEY_SECRET FROM_NUMBER TEST_NUMBER; do
+            if [ -z "${!key}" ]; then
+              echo "::error::$key is not configured"
+              exit 1
+            fi
+          done
+          curl --fail --silent --show-error \
+            "https://powerline-voice-2020.twil.io/token" > /tmp/token-response
+          python3 - <<'PY' >> "$GITHUB_ENV"
+          import base64
+          import json
+
+          raw = open("/tmp/token-response", encoding="utf-8").read().strip()
+          try:
+              parsed = json.loads(raw)
+              token = parsed.get("token") or parsed.get("accessToken") or raw
+          except json.JSONDecodeError:
+              token = raw
+          token = token.strip().strip('"')
+          payload_segment = token.split(".")[1]
+          payload_segment += "=" * (-len(payload_segment) % 4)
+          payload = json.loads(base64.urlsafe_b64decode(payload_segment))
+          account_sid = payload.get("sub")
+          api_key_sid = payload.get("iss")
+          if not (isinstance(account_sid, str) and account_sid.startswith("AC") and len(account_sid) == 34):
+              raise SystemExit("::error::Could not derive the AC-prefixed Account SID from /token")
+          if not (isinstance(api_key_sid, str) and api_key_sid.startswith("SK") and len(api_key_sid) == 34):
+              raise SystemExit("::error::Could not derive the SK-prefixed API Key SID from /token")
+          print(f"ACCOUNT_SID={account_sid}")
+          print(f"API_KEY_SID={api_key_sid}")
+          PY
+
+      - name: Originate Data Rep test call
+        env:
+          API_KEY_SECRET: ${{ secrets.TWILIOPASSWORD }}
+          FROM_NUMBER: ${{ secrets.TWILIO_FROM_NUMBER }}
+          TEST_NUMBER: ${{ secrets.TWILIO_TEST_NUMBER }}
+        run: |
+          API_KEY_SECRET="$(printf '%s' "$API_KEY_SECRET" | tr -d '\r\n\"')"
+          FROM_NUMBER="$(printf '%s' "$FROM_NUMBER" | tr -d '[:space:]\"')"
+          TEST_NUMBER="$(printf '%s' "$TEST_NUMBER" | tr -d '[:space:]\"')"
+          response="$(
+            curl --silent --show-error \
+              --user "$API_KEY_SID:$API_KEY_SECRET" \
+              --request POST \
+              "https://api.twilio.com/2010-04-01/Accounts/$ACCOUNT_SID/Calls.json" \
+              --data-urlencode "From=$FROM_NUMBER" \
+              --data-urlencode "To=$TEST_NUMBER" \
+              --data-urlencode 'Twiml=<Response><Say voice="Polly.Joanna">Hello Amit. This is the PowerLine Data Rep test agent. You cannot sell if you are targeting the wrong audience. TruuOwner helps sales teams qualify the right homeowners, protect every cent spent on outreach, and turn clean records into real conversations. Your live Twilio API calling route is working.</Say></Response>'
+          )"
+          RESPONSE="$response" python3 - <<'PY'
+          import json
+          import os
+          import sys
+
+          payload = json.loads(os.environ["RESPONSE"])
+          if payload.get("sid"):
+              print(f"Call accepted: {payload['sid']} ({payload.get('status', 'queued')})")
+              sys.exit(0)
+          print(f"Twilio rejected the call: {payload.get('message', 'unknown error')}")
+          sys.exit(1)
+          PY
+name: Data Agent Test Call
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  call:
+    name: Call verified Data Rep test number
+    runs-on: ubuntu-latest
+    steps:
       - name: Validate protected configuration
         env:
           ACCOUNT_SID: ${{ secrets.TWILIOACCOUNTSID }}
