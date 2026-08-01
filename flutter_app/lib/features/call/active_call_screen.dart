@@ -56,6 +56,7 @@ class _ActiveCallOverlayState extends ConsumerState<ActiveCallOverlay> {
 
     if (snap.state.isTerminal) {
       return _TerminalBar(
+        key: ValueKey(snap.callId),
         snap: snap,
         callId: snap.callId,
         isLive: isLive,
@@ -486,6 +487,7 @@ class _TerminalBar extends ConsumerStatefulWidget {
   final VoidCallback onDismiss;
   final Color color;
   const _TerminalBar({
+    super.key,
     required this.snap,
     required this.callId,
     required this.isLive,
