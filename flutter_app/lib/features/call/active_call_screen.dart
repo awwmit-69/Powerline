@@ -428,7 +428,7 @@ class _CallTimerState extends State<_CallTimer> {
       builder: (context, _) {
         final snap = widget.snap;
         final ref0 = snap.connectedAt ?? snap.startedAt;
-        final d = DateTime.now().difference(ref0 as DateTime);
+        final d = DateTime.now().difference(ref0);
         final label = snap.connectedAt == null ? 'Ringing' : 'Connected';
         String two(int n) => n.toString().padLeft(2, '0');
         return Text(
