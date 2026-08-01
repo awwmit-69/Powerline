@@ -10,6 +10,7 @@ import '../../core/util/phone.dart';
 import '../../data/repositories/app_repository.dart';
 import '../../domain/models/enums.dart';
 import '../../domain/models/models2.dart';
+import '../../engines/call/call_engine.dart';
 import '../../engines/handoff/handoff_machine.dart';
 import '../../providers.dart';
 import 'package:collection/collection.dart';
@@ -56,6 +57,8 @@ class _ActiveCallOverlayState extends ConsumerState<ActiveCallOverlay> {
     if (snap.state.isTerminal) {
       return _TerminalBar(
         snap: snap,
+        callId: snap.callId,
+        isLive: isLive,
         onDismiss: ctrl.clear,
         color: _stateColor(snap.state),
       );
@@ -410,7 +413,7 @@ class _ActiveCallOverlayState extends ConsumerState<ActiveCallOverlay> {
 }
 
 class _CallTimer extends StatefulWidget {
-  final dynamic snap;
+  final ActiveCallSnapshot snap;
   const _CallTimer({required this.snap});
 
   @override
@@ -476,34 +479,106 @@ class _Ctl extends StatelessWidget {
   }
 }
 
-class _TerminalBar extends StatelessWidget {
-  final dynamic snap;
+class _TerminalBar extends ConsumerStatefulWidget {
+  final ActiveCallSnapshot snap;
+  final String callId;
+  final bool isLive;
   final VoidCallback onDismiss;
   final Color color;
   const _TerminalBar({
     required this.snap,
+    required this.callId,
+    required this.isLive,
     required this.onDismiss,
     required this.color,
   });
 
   @override
+  ConsumerState<_TerminalBar> createState() => _TerminalBarState();
+}
+
+class _TerminalBarState extends ConsumerState<_TerminalBar> {
+  static const _dispositions = <String>[
+    'Connected',
+    'No Answer',
+    'Voicemail',
+    'Callback',
+    'Not Interested',
+    'Appointment Confirmed',
+  ];
+  String? _selected;
+
+  void _apply(String disposition) {
+    final repo = ref.read(appRepositoryProvider);
+    final existing =
+        repo.state.calls.firstWhereOrNull((c) => c.id == widget.callId);
+    if (existing != null) {
+      repo.updateCall(existing.copyWith(disposition: disposition));
+    }
+    setState(() => _selected = disposition);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final label = widget.isLive ? 'Call ended' : 'Demo call ended';
     return Positioned(
       right: 16,
       bottom: 16,
       child: Card(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Row(
+        elevation: 8,
+        child: Container(
+          width: 340,
+          padding: const EdgeInsets.all(14),
+          child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.call_end, size: 16, color: color),
-              const SizedBox(width: 8),
-              Text(
-                'Demo call ended: ${snap.state.name} — saved to Call History',
+              Row(
+                children: [
+                  Icon(Icons.call_end, size: 16, color: widget.color),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '$label · ${widget.snap.state.name}',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
-              TextButton(onPressed: onDismiss, child: const Text('Dismiss')),
+              const SizedBox(height: 4),
+              const Text(
+                'Saved to Call History. Set a disposition:',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: PowerlineColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final d in _dispositions)
+                    ChoiceChip(
+                      label: Text(d, style: const TextStyle(fontSize: 11)),
+                      selected: _selected == d,
+                      visualDensity: VisualDensity.compact,
+                      onSelected: (_) => _apply(d),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: widget.onDismiss,
+                  child: Text(
+                    _selected == null
+                        ? 'Skip & back to dialer'
+                        : 'Back to dialer',
+                  ),
+                ),
+              ),
             ],
           ),
         ),
