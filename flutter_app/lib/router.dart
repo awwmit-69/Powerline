@@ -16,7 +16,7 @@ import 'features/workspaces/rep_workspace_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/home',
+    initialLocation: '/dialpad',
     routes: [
       ShellRoute(
         builder: (context, state, child) =>
