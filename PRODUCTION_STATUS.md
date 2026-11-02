@@ -29,7 +29,7 @@ provider configuration changes, or production deployments were made in this work
 
 ## Test results
 
-18 Node tests passed locally: JWT validation/rejection, signature validation,
+21 Node tests passed locally: JWT validation/rejection, signature validation,
 legacy endpoint retirement, ACL isolation, unknown-user rejection, disabled
 traffic, suppression enforcement, SMS persistence, send deduplication and inbound
 STOP retry behavior. CI runs the same suite on Node 24.
@@ -59,10 +59,11 @@ no assertion that Git history is secret-free is made.
   contact import/export/sync, voicemail, routing and multi-user administration.
 - A durable outbox/reconciliation path for ambiguous sends. A pending send claim
   deliberately blocks automatic retries, but no reconciliation UI exists yet.
-- Delivery callbacks can arrive before the outbound insert; a callback inbox and
-  replay/reconciliation mechanism are required before production traffic.
+- Delivery callbacks are persisted before updating messages, including callbacks
+  that arrive before the outbound insert. Provider reconciliation is still needed
+  for ambiguous network responses and failed database writes after sending.
 - Rate-limit/attempt/audit retention cleanup and user-facing retention controls.
-- Provider comparison with verified current pricing; SignalMash/VoIP.ms adapters.
+- SignalMash/VoIP.ms adapters. Published pricing and integration constraints are in PROVIDERS.md; account-specific quotes remain unverified.
 - Deployment automation, private Flutter build, full security review and acceptance.
 
 ## Configuration needed before private deployment and live tests

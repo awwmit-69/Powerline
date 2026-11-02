@@ -26,7 +26,10 @@ async function webhook(request,env,path) {
   const status = p.get('MessageStatus');
   if (!['queued','sending','sent','delivered','undelivered','failed'].includes(status)) fail(400,'Invalid status');
   // A delayed sent/queued event must never overwrite a terminal receipt.
-  await run(env,"UPDATE messages SET status=? WHERE sid=? AND direction='outbound' AND status NOT IN ('delivered','undelivered','failed')",status,sid).run();
+  await env.DB.batch([
+    run(env,"INSERT INTO delivery_events(sid,status) VALUES(?,?) ON CONFLICT(sid) DO UPDATE SET status=excluded.status,received_at=unixepoch() WHERE delivery_events.status NOT IN ('delivered','undelivered','failed')",sid,status),
+    run(env,"UPDATE messages SET status=? WHERE sid=? AND direction='outbound' AND status NOT IN ('delivered','undelivered','failed')",status,sid)
+  ]);
   return xml();
 }
 export default {
@@ -80,7 +83,7 @@ export default {
       const message = await response.json();
       if (!/^SM[0-9a-fA-F]{32}$/.test(message.sid || '')) fail(502,'Provider returned an invalid response');
       await env.DB.batch([
-        run(env,"INSERT INTO messages(sid,number_id,remote,direction,body,status) VALUES(?,?,?,'outbound',?,?)",message.sid,number.id,input.to,input.body,message.status || 'queued'),
+        run(env,"INSERT INTO messages(sid,number_id,remote,direction,body,status) VALUES(?,?,?,'outbound',?,COALESCE((SELECT status FROM delivery_events WHERE sid=?),?))",message.sid,number.id,input.to,input.body,message.sid,message.status || 'queued'),
         run(env,"UPDATE send_attempts SET state='accepted',sid=? WHERE user_id=? AND request_id=?",message.sid,user.id,requestId),
         run(env,"INSERT INTO audit_logs(user_id,action,resource_id) VALUES(?,'sms.accepted',?)",user.id,message.sid)
       ]);

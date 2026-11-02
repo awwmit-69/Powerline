@@ -115,3 +115,43 @@ test('signed STOP webhook persists suppression and deduplicates retries',async()
   assert.equal(sql.prepare('SELECT count(*) AS n FROM suppressions').get().n,1);
   sql.close();
 });
+
+async function receipt(status,sid='SM'+'b'.repeat(32)) {
+  const url=env.PUBLIC_ORIGIN+'/webhooks/twilio/status';
+  const p=new URLSearchParams({AccountSid:env.TWILIO_ACCOUNT_SID,MessageSid:sid,MessageStatus:status});
+  let data=url;for(const key of [...p.keys()].sort())data+=key+p.get(key);
+  return new Request(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-Twilio-Signature':createHmac('sha1',env.TWILIO_AUTH_TOKEN).update(data).digest('base64')},body:p});
+}
+test('early delivery receipts survive outbound insert and delayed sent receipts',async()=>{
+  const {sql,DB}=database();
+  const previous=globalThis.fetch;
+  globalThis.fetch=async()=>{
+    assert.equal((await worker.fetch(await receipt('delivered'),{...env,DB})).status,200);
+    return new Response(JSON.stringify({sid:'SM'+'b'.repeat(32),status:'queued'}));
+  };
+  try {
+    assert.equal((await worker.fetch(await api('/api/messages',{number_id:'line',to:'+12025550123',body:'hello'}),{...env,DB,TELECOM_ENABLED:'true'})).status,202);
+    assert.equal(sql.prepare('SELECT status FROM messages').get().status,'delivered');
+    assert.equal((await worker.fetch(await receipt('sent'),{...env,DB})).status,200);
+    assert.equal(sql.prepare('SELECT status FROM messages').get().status,'delivered');
+  }finally{globalThis.fetch=previous;sql.close();}
+});
+test('rate limits and cross-origin requests block before provider access',async()=>{
+  const {sql,DB}=database();
+  const input={number_id:'line',to:'+12025550123',body:'hello'};
+  sql.prepare('INSERT INTO rate_limits VALUES(?,?,10)').run('owner',Math.floor(Date.now()/60000));
+  assert.equal((await worker.fetch(await api('/api/messages',input),{...env,DB,TELECOM_ENABLED:'true'})).status,429);
+  const r=await api('/api/messages',input);r.headers.set('Origin','https://attacker.example');
+  assert.equal((await worker.fetch(r,{...env,DB,TELECOM_ENABLED:'true'})).status,403);
+  sql.close();
+});
+test('ambiguous provider failure cannot be blindly retried',async()=>{
+  const {sql,DB}=database();const previous=globalThis.fetch;let calls=0;
+  globalThis.fetch=async()=>{calls++;throw Error('timeout');};
+  try {
+    const input={number_id:'line',to:'+12025550123',body:'hello'};
+    assert.equal((await worker.fetch(await api('/api/messages',input),{...env,DB,TELECOM_ENABLED:'true'})).status,502);
+    assert.equal((await worker.fetch(await api('/api/messages',input),{...env,DB,TELECOM_ENABLED:'true'})).status,409);
+    assert.equal(calls,1);
+  }finally{globalThis.fetch=previous;sql.close();}
+});
