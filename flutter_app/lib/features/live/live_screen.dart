@@ -200,7 +200,8 @@ class _LiveScreenState extends State<LiveScreen> {
   }
 
   Future<void> _navigate(String path) async {
-    await launchUrl(Uri.base.resolve(path), mode: LaunchMode.externalApplication, webOnlyWindowName: '_self');
+    await launchUrl(Uri.base.resolve(path),
+        mode: LaunchMode.externalApplication, webOnlyWindowName: '_self');
   }
 
   Future<void> _open() async {
@@ -234,13 +235,17 @@ class _LiveScreenState extends State<LiveScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('POWERLINE'), actions: [
         if (kIsWeb && _session?['role'] == 'admin')
-          TextButton(onPressed: () => _navigate('/setup/twilio'), child: const Text('Twilio setup')),
+          TextButton(
+              onPressed: () => _navigate('/setup/twilio'),
+              child: const Text('Twilio setup')),
         if (kIsWeb && _session != null)
-          TextButton(onPressed: () => _perform(() async {
-            await _client.request('POST', '/api/auth/logout', {});
-            _client.control('hangup');
-            await _navigate('/login');
-          }), child: const Text('Sign out')),
+          TextButton(
+              onPressed: () => _perform(() async {
+                    await _client.request('POST', '/api/auth/logout', {});
+                    _client.control('hangup');
+                    await _navigate('/login');
+                  }),
+              child: const Text('Sign out')),
         if (kIsWeb)
           IconButton(
               onPressed: _busy ? null : _load,
