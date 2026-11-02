@@ -1,4 +1,5 @@
-import {authenticate,validateWebhook,e164,isStop,fail,HttpError} from './security.mjs';
+import {authenticate,validateWebhook,e164,isStop,fail,HttpError,readJson} from './security.mjs';
+import {createVoiceToken,createIntent,voiceWebhook,authorizedNumber} from './voice.mjs';
 const json = (data,status=200) => new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'}});
 const xml = () => new Response('<?xml version="1.0" encoding="UTF-8"?><Response/>',{headers:{'Content-Type':'text/xml','Cache-Control':'no-store'}});
 const run = (env,sql,...values) => env.DB.prepare(sql).bind(...values);
@@ -36,12 +37,40 @@ export default {
   async fetch(request,env) {
     try {
       const url = new URL(request.url), path = url.pathname;
+      if(['/webhooks/twilio/voice','/webhooks/twilio/incoming','/webhooks/twilio/call-status'].includes(path))return await voiceWebhook(request,env,path);
       if (path === '/webhooks/twilio/sms' || path === '/webhooks/twilio/status') return await webhook(request,env,path);
       if (!path.startsWith('/api/')) fail(404,'Not found');
       const claims = await authenticate(request,env);
       if (!env.DB) fail(503,'Storage not configured');
       const user = await run(env,'SELECT * FROM users WHERE email=? AND active=1',claims.email.toLowerCase()).first();
       if (!user) fail(403,'User has not been invited');
+      if(path==='/api/provider/status'&&request.method==='GET')return json({enabled:env.TELECOM_ENABLED==='true',sms_configured:!!(env.TWILIO_ACCOUNT_SID&&env.TWILIO_AUTH_TOKEN),voice_configured:!!(env.TWILIO_API_KEY_SID&&env.TWILIO_API_KEY_SECRET&&env.TWIML_APP_SID),emergency_calling:false});
+      if(path==='/api/voice/token'&&request.method==='GET')return json(await createVoiceToken(env,user));
+      if(path==='/api/voice/intent'&&request.method==='POST')return json(await createIntent(env,user,await readJson(request,env)),201);
+      if(path==='/api/calls'&&request.method==='GET'){
+        const number=await authorizedNumber(env,user,url.searchParams.get('number_id'),'voice');
+        return json({calls:(await run(env,'SELECT sid,number_id,remote,direction,status,duration,created_at FROM calls WHERE number_id=? ORDER BY created_at DESC,sid DESC LIMIT 100',number.id).all()).results});
+      }
+      if(path==='/api/users'){
+        if(user.role!=='admin')fail(403,'Administrator required');
+        if(request.method==='GET')return json({users:(await run(env,'SELECT id,email,role,active FROM users ORDER BY id').all()).results});
+        if(request.method!=='PATCH')fail(405,'Method not allowed');
+        const input=await readJson(request,env);
+        if(typeof input.id!=='string'||!['admin','agent'].includes(input.role)||typeof input.email!=='string'||input.email.length>254||!/^\S+@\S+\.\S+$/.test(input.email)||![true,false].includes(input.active))fail(400,'Valid ID, email, role and active status required');
+        if(input.active&&input.email.endsWith('.invalid'))fail(400,'Assign a real email before activation');
+        if(input.id===user.id&&(!input.active||input.role!=='admin'||input.email.toLowerCase()!==user.email))fail(409,'You cannot remove your own owner access');
+        if(!await run(env,'SELECT id FROM users WHERE id=?',input.id).first())fail(404,'Account slot does not exist');
+        await env.DB.batch([run(env,'UPDATE users SET email=?,role=?,active=? WHERE id=?',input.email.toLowerCase(),input.role,input.active?1:0,input.id),run(env,"INSERT INTO audit_logs(user_id,action,resource_id) VALUES(?,'user.update',?)",user.id,input.id)]);
+        return json({updated:true});
+      }
+      if(path==='/api/permissions'&&request.method==='POST'){
+        if(user.role!=='admin')fail(403,'Administrator required');
+        const input=await readJson(request,env);
+        if(typeof input.user_id!=='string'||typeof input.number_id!=='string'||typeof input.grant!=='boolean')fail(400,'Account, number and grant flag required');
+        if(!await run(env,'SELECT id FROM users WHERE id=?',input.user_id).first()||!await run(env,'SELECT id FROM numbers WHERE id=? AND active=1',input.number_id).first())fail(404,'Unknown account or number');
+        await env.DB.batch([input.grant?run(env,'INSERT OR IGNORE INTO number_permissions(user_id,number_id) VALUES(?,?)',input.user_id,input.number_id):run(env,'DELETE FROM number_permissions WHERE user_id=? AND number_id=?',input.user_id,input.number_id),run(env,"INSERT INTO audit_logs(user_id,action,resource_id) VALUES(?,'number.permission',?)",user.id,input.user_id+':'+input.number_id)]);
+        return json({updated:true});
+      }
       if (path === '/api/session' && request.method === 'GET') return json({id:user.id,role:user.role,email:user.email});
       if (path === '/api/numbers' && request.method === 'GET') {
         const result = await run(env,"SELECT n.* FROM numbers n WHERE n.active=1 AND (?='admin' OR EXISTS(SELECT 1 FROM number_permissions p WHERE p.number_id=n.id AND p.user_id=?))",user.role,user.id).all();
@@ -54,11 +83,7 @@ export default {
         return json({messages:result.results});
       }
       if (request.method !== 'POST') fail(405,'Method not allowed');
-      if (request.headers.get('Origin') !== env.PUBLIC_ORIGIN || url.origin !== env.PUBLIC_ORIGIN) fail(403,'Same-origin requests required');
-      if (!(request.headers.get('Content-Type') || '').startsWith('application/json')) fail(415,'JSON required');
-      const raw = await request.text();
-      if (raw.length > 8192) fail(413,'Payload too large');
-      let input; try {input=JSON.parse(raw);} catch {fail(400,'Invalid JSON');}
+      const input=await readJson(request,env);
       if (!input || typeof input !== 'object' || !e164(input.to) || typeof input.body !== 'string' || !input.body.trim() || input.body.length>1600) fail(400,'Valid destination and body required');
       // Match the existing Flutter client's from field, but authorize it server-side.
       const id = input.number_id || (await run(env,'SELECT id FROM numbers WHERE e164=?',input.from || '').first())?.id;

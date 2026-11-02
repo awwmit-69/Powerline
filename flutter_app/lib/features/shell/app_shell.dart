@@ -14,6 +14,7 @@ import '../call/incoming_call_screen.dart';
 import '../search/search_palette.dart';
 
 const _navItems = [
+  ('/live', Icons.phone_in_talk_outlined, 'Live workspace'),
   ('/home', Icons.dashboard_outlined, 'Home'),
   ('/workspaces', Icons.space_dashboard_outlined, 'Rep Views'),
   ('/dialpad', Icons.dialpad, 'Dialpad'),
@@ -136,7 +137,7 @@ class AppShell extends ConsumerWidget {
                 const Padding(
                   padding: EdgeInsets.all(12),
                   child: DemoBadge(
-                    label: 'TWILIO CALLING LIVE · AI/SMS TEST MODE',
+                    label: 'PREVIEW · LIVE WORKSPACE REQUIRES SIGN-IN',
                   ),
                 ),
               ],

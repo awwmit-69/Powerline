@@ -1,9 +1,9 @@
 {
   "name": "Powerline",
   "short_name": "Powerline",
-  "start_url": ".",
+  "start_url": "./#/live",
   "display": "standalone",
   "background_color": "#15171A",
-  "theme_color": "#9E1B32",
-  "description": "Powerline cloud communications (demo mode)."
+  "theme_color": "#2563eb",
+  "description": "PowerLine private communications workspace"
 }

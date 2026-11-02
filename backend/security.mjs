@@ -6,6 +6,19 @@ export class HttpError extends Error {
 export const fail = (status, message) => { throw new HttpError(status, message); };
 export const e164 = value => typeof value === 'string' && /^\+[1-9]\d{7,14}$/.test(value);
 export const isStop = value => /^(stop|stopall|unsubscribe|cancel|end|quit|revoke|optout)$/i.test(String(value).trim());
+export async function readLimited(request,limit) {
+  if(Number(request.headers.get('Content-Length')||0)>limit)fail(413,'Payload too large');
+  if(!request.body)return '';
+  const reader=request.body.getReader();let length=0;const chunks=[];
+  try{while(true){const {done,value}=await reader.read();if(done)break;length+=value.byteLength;if(length>limit){await reader.cancel();fail(413,'Payload too large');}chunks.push(value);}}finally{reader.releaseLock();}
+  const out=new Uint8Array(length);let at=0;for(const chunk of chunks){out.set(chunk,at);at+=chunk.byteLength;}
+  return new TextDecoder().decode(out);
+}
+export async function readJson(request,env) {
+  if(request.headers.get('Origin')!==env.PUBLIC_ORIGIN||new URL(request.url).origin!==env.PUBLIC_ORIGIN)fail(403,'Same-origin requests required');
+  if(!(request.headers.get('Content-Type')||'').startsWith('application/json'))fail(415,'JSON required');
+  try{const value=JSON.parse(await readLimited(request,8192));if(!value||typeof value!=='object'||Array.isArray(value))fail(400,'Object required');return value;}catch(error){if(error instanceof HttpError)throw error;fail(400,'Invalid JSON');}
+}
 export function bytes64(value) { return Uint8Array.from(atob(value.replace(/-/g,'+').replace(/_/g,'/')), c => c.charCodeAt(0)); }
 export function base64url(value) { return btoa(String.fromCharCode(...value)).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_'); }
 export async function hmac(secret, data, hash = 'SHA-256') {
@@ -45,8 +58,7 @@ export async function validateWebhook(request, env) {
   if (!(request.headers.get('Content-Type') || '').startsWith('application/x-www-form-urlencoded')) fail(415,'Form body required');
   const url = new URL(request.url);
   if (url.origin !== env.PUBLIC_ORIGIN) fail(403,'Invalid webhook origin');
-  const raw = await request.text();
-  if (raw.length > 16384) fail(413,'Payload too large');
+  const raw = await readLimited(request,16384);
   const params = new URLSearchParams(raw);
   let signed = url.href;
   for (const key of [...new Set(params.keys())].sort()) {

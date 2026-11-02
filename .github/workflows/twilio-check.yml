@@ -1,0 +1,45 @@
+name: Twilio protected configuration check
+on:
+  push:
+    branches: [codex/production-security]
+    paths:
+      - '.github/workflows/twilio-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  provider:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check existing protected credentials without exposing them
+        env:
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          TWILIO_API_KEY_SID: ${{ secrets.TWILIO_API_KEY_SID }}
+          TWILIO_API_KEY_SECRET: ${{ secrets.TWILIO_API_KEY_SECRET }}
+          TWIML_APP_SID: ${{ secrets.TWIML_APP_SID }}
+          POWERLINE_FROM_NUMBER: ${{ secrets.POWERLINE_FROM_NUMBER }}
+        run: |
+          python - <<'PY'
+          import os, json, base64, urllib.request, urllib.error
+          names = ['TWILIO_ACCOUNT_SID','TWILIO_AUTH_TOKEN','TWILIO_API_KEY_SID','TWILIO_API_KEY_SECRET','TWIML_APP_SID','POWERLINE_FROM_NUMBER']
+          present = {name: bool(os.environ.get(name)) for name in names}
+          report = {'configured': present, 'provider_read_access_verified': False, 'billable_operations_performed': False}
+          sid = os.environ.get('TWILIO_ACCOUNT_SID', '')
+          secret = os.environ.get('TWILIO_AUTH_TOKEN', '')
+          if sid and secret:
+              auth = base64.b64encode((sid+':'+secret).encode()).decode()
+              request = urllib.request.Request('https://api.twilio.com/2010-04-01/Accounts/'+sid+'/IncomingPhoneNumbers.json?PageSize=100',headers={'Authorization':'Basic '+auth})
+              try:
+                  with urllib.request.urlopen(request, timeout=20) as response:
+                      numbers = json.load(response).get('incoming_phone_numbers', [])
+                  report['provider_read_access_verified'] = True
+                  report['first_page_owned_number_count'] = len(numbers)
+                  report['first_page_voice_capable'] = sum(bool(n.get('capabilities',{}).get('voice')) for n in numbers)
+                  report['first_page_sms_capable'] = sum(bool(n.get('capabilities',{}).get('sms')) for n in numbers)
+              except urllib.error.HTTPError as error:
+                  report['provider_http_status'] = error.code
+              except Exception:
+                  report['provider_connection_failed'] = True
+          print('POWERLINE_PROVIDER_CHECK='+json.dumps(report, sort_keys=True))
+          PY

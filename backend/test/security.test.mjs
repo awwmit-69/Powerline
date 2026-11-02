@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createHmac} from 'node:crypto';
 import {authenticate,base64url,validateWebhook,e164,isStop} from '../security.mjs';
 import worker from '../worker.mjs';
+import {createVoiceToken,createIntent,voiceWebhook} from '../voice.mjs';
 import {DatabaseSync} from 'node:sqlite';
 import {readFileSync} from 'node:fs';
 
@@ -62,6 +63,7 @@ test('webhooks cannot bypass signature verification',async()=>assert.equal((awai
 function database() {
   const sql=new DatabaseSync(':memory:');
   sql.exec(readFileSync(new URL('../schema.sql',import.meta.url),'utf8'));
+  sql.exec(readFileSync(new URL('../migrations/002_voice.sql',import.meta.url),'utf8'));
   sql.exec("INSERT INTO users VALUES('owner','owner@example.com','agent',1); INSERT INTO numbers VALUES('line','+12025550124','twilio',0,1,1); INSERT INTO numbers VALUES('private','+12025550125','twilio',0,1,1); INSERT INTO number_permissions VALUES('owner','line');");
   const wrap=(query,args=[])=>({bind(...values){return wrap(query,values);},async first(){return sql.prepare(query).get(...args)||null;},async all(){return {results:sql.prepare(query).all(...args)};},async run(){const r=sql.prepare(query).run(...args);return {meta:{changes:r.changes}};}});
   return {sql,DB:{prepare:wrap,async batch(statements){sql.exec('BEGIN');try{const out=[];for(const s of statements)out.push(await s.run());sql.exec('COMMIT');return out;}catch(e){sql.exec('ROLLBACK');throw e;}}}};
@@ -154,4 +156,69 @@ test('ambiguous provider failure cannot be blindly retried',async()=>{
     assert.equal((await worker.fetch(await api('/api/messages',input),{...env,DB,TELECOM_ENABLED:'true'})).status,409);
     assert.equal(calls,1);
   }finally{globalThis.fetch=previous;sql.close();}
+});
+
+const voiceEnv={...env,TELECOM_ENABLED:'true',TWILIO_API_KEY_SID:'SK'+'d'.repeat(32),TWILIO_API_KEY_SECRET:'test-voice-secret',TWIML_APP_SID:'AP'+'e'.repeat(32),TEST_DESTINATIONS:'+12025550123'};
+function voiceDatabase(){const db=database();db.sql.exec("UPDATE numbers SET voice=1");return db;}
+async function signedVoice(path,fields){
+  const url=env.PUBLIC_ORIGIN+path;
+  const p=new URLSearchParams({AccountSid:env.TWILIO_ACCOUNT_SID,CallSid:'CA'+'f'.repeat(32),...fields});
+  let data=url;for(const key of [...p.keys()].sort())data+=key+p.get(key);
+  return new Request(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-Twilio-Signature':createHmac('sha1',env.TWILIO_AUTH_TOKEN).update(data).digest('base64')},body:p});
+}
+test('voice tokens are short-lived, server-signed and bound to a user',async()=>{
+  const {sql,DB}=voiceDatabase();
+  const result=await createVoiceToken({...voiceEnv,DB},{id:'owner'});
+  const [header,body,signature]=result.token.split('.');
+  const payload=JSON.parse(Buffer.from(body,'base64url').toString());
+  assert.equal(signature,createHmac('sha256',voiceEnv.TWILIO_API_KEY_SECRET).update(header+'.'+body).digest('base64url'));
+  assert.equal(payload.grants.identity,'pl_owner');
+  assert.equal(payload.exp-payload.iat,300);
+  assert.equal(payload.grants.voice.outgoing.application_sid,voiceEnv.TWIML_APP_SID);
+  assert.equal(JSON.parse(Buffer.from(header,'base64url').toString()).cty,'twilio-fpa;v=1');
+  await assert.rejects(createVoiceToken({...voiceEnv,DB,TELECOM_ENABLED:'false'},{id:'owner'}),e=>e.status===503);
+  sql.close();
+});
+test('outgoing voice requires authorized line, destination and single-use grant',async()=>{
+  const {sql,DB}=voiceDatabase();const user={id:'owner',role:'agent'};
+  await assert.rejects(createIntent({...voiceEnv,DB},user,{number_id:'private',to:'+12025550123'}),e=>e.status===403);
+  await assert.rejects(createIntent({...voiceEnv,DB},user,{number_id:'line',to:'+12025550129'}),e=>e.status===403);
+  const intent=await createIntent({...voiceEnv,DB},user,{number_id:'line',to:'+12025550123'});
+  const fields={From:'client:pl_owner',To:intent.to,CallGrant:intent.grant,CallerId:'+12025550199'};
+  const response=await voiceWebhook(await signedVoice('/webhooks/twilio/voice',fields),{...voiceEnv,DB},'/webhooks/twilio/voice');
+  const xml=await response.text();
+  assert.match(xml,/callerId="\+12025550124"/);assert.doesNotMatch(xml,/50199/);
+  assert.equal(sql.prepare('SELECT used FROM call_intents').get().used,1);
+  assert.equal(sql.prepare('SELECT count(*) AS n FROM calls').get().n,1);
+  await voiceWebhook(await signedVoice('/webhooks/twilio/voice',fields),{...voiceEnv,DB},'/webhooks/twilio/voice');
+  await assert.rejects(voiceWebhook(await signedVoice('/webhooks/twilio/voice',{...fields,CallSid:'CA'+'a'.repeat(32)}),{...voiceEnv,DB},'/webhooks/twilio/voice'),e=>e.status===403);
+  sql.close();
+});
+test('voice grants reject spoofed identities, expired grants and DNC destinations',async()=>{
+  const {sql,DB}=voiceDatabase();const user={id:'owner',role:'agent'};
+  const intent=await createIntent({...voiceEnv,DB},user,{number_id:'line',to:'+12025550123'});
+  await assert.rejects(voiceWebhook(await signedVoice('/webhooks/twilio/voice',{From:'client:pl_attacker',To:intent.to,CallGrant:intent.grant}),{...voiceEnv,DB},'/webhooks/twilio/voice'),e=>e.status===403);
+  sql.exec('UPDATE call_intents SET expires_at=0');
+  await assert.rejects(voiceWebhook(await signedVoice('/webhooks/twilio/voice',{From:'client:pl_owner',To:intent.to,CallGrant:intent.grant}),{...voiceEnv,DB},'/webhooks/twilio/voice'),e=>e.status===403);
+  sql.exec("INSERT INTO voice_dnc VALUES('+12025550123')");
+  await assert.rejects(createIntent({...voiceEnv,DB},user,{number_id:'line',to:intent.to}),e=>e.status===409);
+  sql.close();
+});
+test('inbound voice rings only active users assigned to that number',async()=>{
+  const {sql,DB}=voiceDatabase();
+  sql.exec("INSERT INTO users VALUES('unassigned','nobody@example.com','agent',1)");
+  const response=await voiceWebhook(await signedVoice('/webhooks/twilio/incoming',{To:'+12025550124',From:'+12025550123'}),{...voiceEnv,DB},'/webhooks/twilio/incoming');
+  const xml=await response.text();assert.match(xml,/pl_owner/);assert.doesNotMatch(xml,/pl_unassigned/);
+  sql.exec("UPDATE users SET active=0 WHERE id='owner'");
+  assert.match(await (await voiceWebhook(await signedVoice('/webhooks/twilio/incoming',{To:'+12025550124',From:'+12025550123'}),{...voiceEnv,DB},'/webhooks/twilio/incoming')).text(),/Reject/);
+  sql.close();
+});
+test('agents cannot manage accounts and owner cannot disable self',async()=>{
+  const {sql,DB}=database();
+  assert.equal((await worker.fetch(await api('/api/users'),{...env,DB})).status,403);
+  sql.exec("UPDATE users SET role='admin' WHERE id='owner'");
+  const req=await api('/api/users',{id:'owner',email:'owner@example.com',role:'agent',active:false});
+  const patch=new Request(req,{method:'PATCH'});
+  assert.equal((await worker.fetch(patch,{...env,DB})).status,409);
+  sql.close();
 });
