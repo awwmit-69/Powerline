@@ -35,8 +35,9 @@ traffic, suppression enforcement, SMS persistence, send deduplication and inboun
 STOP retry behavior. CI runs the same suite on Node 24.
 
 Flutter and Dart SDKs are unavailable in the execution container. GitHub Actions passed formatting, analysis and Flutter tests at commit
-ffe692bc9595e1d51c784bcdba49fec51105cdfd. Web and Windows release builds were
-launched; check their final status before merge. No live acceptance
+ffe692bc9595e1d51c784bcdba49fec51105cdfd. Web and Windows release builds, Windows packaging and artifact uploads passed.
+Artifacts are available in workflow run 41424922465; Windows runtime functionality
+and telecom capabilities have not been tested. No live acceptance
 tests, browser audio checks, Windows runtime tests or deployed-auth tests passed.
 
 ## Infrastructure inspection
@@ -86,3 +87,11 @@ security review and provider-side credential inventory remain incomplete.
 Do not set TELECOM_ENABLED=true until unfinished engineering and release checks
 above have been completed. These tests demonstrate the implemented boundary,
 not production readiness, emergency calling, carrier registration or consent.
+
+## Build artifacts
+
+- Web: https://github.com/awwmit-69/Powerline/actions/runs/41424922465/artifacts/13130963374
+- Windows: https://github.com/awwmit-69/Powerline/actions/runs/41424922465/artifacts/13131807373
+
+These are CI build artifacts for tested code commit ffe692bc9595e1d51c784bcdba49fec51105cdfd,
+not a deployed production release. Later commits only update this report and pricing.
