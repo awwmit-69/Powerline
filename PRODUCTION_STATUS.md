@@ -44,16 +44,23 @@ assets and APIs require a signed-in active account; the login page alone is publ
 The five password credentials were provisioned to D1. Root secret material is held
 in a Worker secret; it is absent from GitHub and the credential delivery file.
 
-41 local backend/browser-bridge tests passed, including password sessions,
+42 local backend/browser-bridge tests passed, including password sessions,
 logout/revocation, login throttles, CSRF, private asset gates, encrypted provider
 storage, trial recipient enforcement, SMS and voice controls with mock providers.
 Updated Flutter checks and web/Windows builds run in Actions. Earlier app builds
 passed; authenticated browser rendering is not a telephone acceptance test.
 
-The cloud browser available to the agent rejected this hostname at the environment
-network boundary. This was not a site CAPTCHA or bot-detection finding. Separate
-HTTPS and deployed-runtime checks are used where available; their outcomes must
-be recorded before claiming sign-in has been verified remotely.
+The deployed HTTPS runtime check passed owner/agent sign-in, private app and bundle
+loading, owner setup access, agent denial from admin/provider pages, traffic-disabled
+state and logout revocation. Temporary QA credentials and the schedule were removed.
+
+The cloud browser is unavailable for visual inspection of this hostname. Separately,
+external CI clients received Cloudflare managed-challenge HTML instead of app API
+responses. The zone has Bot Fight Mode enabled. Cloudflare documents that free Bot
+Fight Mode cannot be bypassed by per-path WAF/Page Rules. Changing that zone-wide
+setting would also affect the business site and awaits the owner's approval.
+WEBHOOK_EDGE_READY is false; changing number routing or enabling paid test traffic
+is blocked until that edge conflict is resolved.
 
 ## Application scope
 
@@ -67,3 +74,14 @@ Legacy public SMS/TTS functions are retired in source only; their deployed copie
 still need separate provider-side updates. Ambiguous sends require reconciliation.
 See PROVIDERS.md for published rates and limitations. The AZD Global website and
 its routes were not changed.
+
+## Latest build evidence
+
+Flutter formatting, analysis, tests, private web, preview web and Windows builds
+passed in workflow run 41489499422. The private web build from this run was packaged
+and deployed to the authenticated Worker. No native Windows audio test or real
+telephone call/SMS delivery passed.
+
+Cloudflare references:
+https://developers.cloudflare.com/bots/get-started/bot-fight-mode/
+https://developers.cloudflare.com/bots/troubleshooting/false-positives/

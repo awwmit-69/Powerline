@@ -90,3 +90,11 @@ test('owner can configure existing trial line and only enable a verified test re
   for(const call of calls)assert.ok(!/\/Calls|\/Messages/.test(call.url));
   await assert.rejects(providerSetting({method:'POST'},env,{id:'agent01',role:'agent'},'/api/provider/connect',{},fetcher),e=>e.status===403);db.close();
 });
+test('known edge challenges prevent routing changes and test activation',async()=>{
+  const {env,db}=await fixture();env.WEBHOOK_EDGE_READY='false';
+  await saveProvider(env,{account_sid:'AC'+'a'.repeat(32),auth_token:'test-fixture-token',enabled:false});
+  const denied=()=>{throw Error('must not contact provider while edge is blocked');};
+  await assert.rejects(providerSetting({method:'POST'},env,{id:'owner',role:'admin'},'/api/provider/line',{number_sid:'PN'+'b'.repeat(32)},denied),/Cloudflare/);
+  await assert.rejects(providerSetting({method:'POST'},env,{id:'owner',role:'admin'},'/api/provider/enable',{recipient:'+12025550123',approve_usage:true},denied),/Cloudflare/);
+  assert.equal(db.prepare('SELECT count(*) AS n FROM numbers').get().n,0);db.close();
+});

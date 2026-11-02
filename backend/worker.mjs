@@ -54,7 +54,7 @@ export default {
       }
       if(path==='/setup/twilio'){
         if(user.role!=='admin')fail(403,'Administrator required');
-        return setupPage();
+        return setupPage(env);
       }
       if(['/api/provider/connect','/api/provider/line','/api/provider/enable','/api/provider/disable','/api/provider/numbers'].includes(path)){
         if(path==='/api/provider/numbers'&&request.method!=='GET')fail(405,'GET required');

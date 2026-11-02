@@ -19,6 +19,7 @@ migrations_dir = "migrations"
 [vars]
 TELECOM_ENABLED = "false"
 AUTH_MODE = "password"
+WEBHOOK_EDGE_READY = "false"
 PUBLIC_ORIGIN = "https://powerline.azdglobal.com"
 # AUTH_PEPPER must be a Worker secret, never committed here.
 # Bind a dedicated DB to schema.sql; never reuse the AZD Global website database.

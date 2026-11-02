@@ -49,6 +49,7 @@ async function setting(request,env,user,path,input,fetcher){
     return {trial:p.trial,numbers:summaries(rows.incoming_phone_numbers||[])};
   }
   if(path==='/api/provider/line'){
+    if(env.WEBHOOK_EDGE_READY==='false')fail(409,'Cloudflare is challenging automated requests. Resolve the Bot Fight Mode webhook conflict before changing number routing.');
     if(!/^PN[0-9a-f]{32}$/i.test(input.number_sid||''))fail(400,'Select an existing Twilio number');
     const number=await twilio(p,`/IncomingPhoneNumbers/${input.number_sid}.json`,null,fetcher);
     if(number.account_sid!==p.account_sid||!number.capabilities?.voice)fail(403,'Choose a voice-capable number owned by this account');
@@ -71,6 +72,7 @@ async function setting(request,env,user,path,input,fetcher){
     return {configured:true,number:{id:number.sid,e164:number.phone_number},trial:p.trial};
   }
   if(path==='/api/provider/enable'){
+    if(env.WEBHOOK_EDGE_READY==='false')fail(409,'Cloudflare webhook access has not been cleared. Test traffic remains disabled.');
     if(!p.number_sid||!p.key_sid||!p.app_sid)fail(409,'Configure the existing number first');
     if(input.approve_usage!==true||!e164(input.recipient))fail(400,'Enter an authorized test recipient and approve Twilio usage charges');
     const account=await twilio(p,'.json',null,fetcher);
