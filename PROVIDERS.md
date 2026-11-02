@@ -8,14 +8,17 @@ Published USD list prices, before tax, surcharges and registration unless stated
 
 | Provider | Number rental | Voice | SMS | Integration consequence |
 | --- | --- | --- | --- | --- |
-| Twilio | US local $1.15/month | Local outgoing $0.014/min; incoming $0.0085/min; browser/app leg $0.004/min | Obtain account-specific messaging and carrier rates before approval | Best fit for existing browser bridge; secure token issuer and TwiML still required |
+| Twilio | US local $1.15/month | Local outgoing $0.014/min; incoming $0.0085/min; browser/app leg $0.004/min | $0.0083 per US long-code segment sent/received, plus carrier fees; obtain account-specific quote | Best fit for existing browser bridge; secure token issuer and TwiML still required |
 | SignalMash Launch | Obtain number quote | Voice API US lower 48 zone 1 outgoing $0.0086/min; local inbound $0.0071/min | $0.0039 send/receive; published SMS plan lists $19/month platform fee and $19 onboarding | Voice and messages APIs exist; confirm browser media transport and webhook verification before adapter work |
 | VoIP.ms | Local starting $1.10/month and $0.40 setup | Outgoing from $0.005/min; inbound from $0.009/min | $0.0075 send/receive; MMS $0.02 | SIP voice and REST control/messaging; portal API enablement and IP whitelist required |
 
 Example Twilio estimate: one local number, 100 outbound and 100 inbound minutes,
 with one browser SDK leg per call minute: $1.15 + $1.40 + $0.85 + $0.80 =
 $4.20/month before SMS, taxes, registrations, recordings and other features.
-This is an engineering estimate from published line items, not an account quote.
+Adding 100 outbound and 100 inbound single-segment SMS adds $1.66 base usage,
+for $5.86 before carrier fees and the other exclusions above. Unicode and long
+messages can consume multiple billable segments. This is an engineering estimate
+from published line items, not an account quote.
 
 SignalMash Launch's published SMS plan lists basic brand vetting $25 once and
 low mixed-use campaign $5/month. Confirm account applicability and voice/number
@@ -38,6 +41,7 @@ Sources:
 
 - https://www.twilio.com/en-us/voice/pricing/us
 - https://www.twilio.com/docs/voice/pricing
+- https://www.twilio.com/en-us/sms/pricing/us
 - https://signalmash.com/pricing
 - https://doc.signalmash.com/ (use POST /messages; older /sms and /mms deprecated)
 - https://voip.ms/pricing

@@ -34,9 +34,9 @@ legacy endpoint retirement, ACL isolation, unknown-user rejection, disabled
 traffic, suppression enforcement, SMS persistence, send deduplication and inbound
 STOP retry behavior. CI runs the same suite on Node 24.
 
-Flutter and Dart SDKs are unavailable in the execution container. Existing GitHub
-Actions remain responsible for formatting, analysis, Flutter tests, web and Windows
-builds. Build and CI results must be reviewed before merge. No live acceptance
+Flutter and Dart SDKs are unavailable in the execution container. GitHub Actions passed formatting, analysis and Flutter tests at commit
+ffe692bc9595e1d51c784bcdba49fec51105cdfd. Web and Windows release builds were
+launched; check their final status before merge. No live acceptance
 tests, browser audio checks, Windows runtime tests or deployed-auth tests passed.
 
 ## Infrastructure inspection
@@ -48,8 +48,10 @@ its routes, DNS and database were left untouched.
 
 GitHub connector read/write access works. Direct Git cloning is denied by the
 execution network. Current relevant source and recent commit metadata were read
-through GitHub. A complete historical credential audit has NOT been performed;
-no assertion that Git history is secret-free is made.
+through GitHub. The full-history CI pattern scan screened 297 reachable text blobs, skipped 14
+binary/large blobs, and found zero matches for its selected credential patterns.
+This is automated screening, not proof that Git history is secret-free; manual
+security review and provider-side credential inventory remain incomplete.
 
 ## Remaining engineering
 
