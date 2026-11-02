@@ -1,0 +1,33 @@
+name: PowerLine HTTPS boundary check
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/production-security]
+    paths: ['.github/workflows/deployment-check.yml']
+permissions:
+  contents: read
+jobs:
+  https:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify deployed login and anonymous access boundary
+        run: |
+          python - <<'PY'
+          import urllib.request, urllib.error, json
+          base='https://powerline.azdglobal.com'
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self,*args):return None
+          opener=urllib.request.build_opener(NoRedirect)
+          results={}
+          for path,expected in [('/login',200),('/api/session',401),('/',303),('/setup/twilio',303)]:
+              try:
+                  with opener.open(base+path,timeout=30) as r:
+                      status=r.status
+                      if path=='/login':
+                          assert 'autocomplete="username"' in r.read().decode()
+              except urllib.error.HTTPError as error:
+                  status=error.code
+              results[path]={'status':status,'expected':expected,'passed':status==expected}
+          print(json.dumps(results,sort_keys=True))
+          assert all(r['passed'] for r in results.values())
+          PY
