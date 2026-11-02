@@ -46,17 +46,19 @@ private database, not seeded into public source.
 
 ## Automated verification
 
-32 local backend/browser-bridge tests pass, covering sessions, webhook signatures,
+36 backend/browser-bridge tests pass locally and in GitHub Actions, covering sessions, webhook signatures,
 ACL isolation, SMS persistence/opt-outs/delivery ordering, duplicate-send protection,
 voice token signatures, caller-ID enforcement, single-use grants, DNC restrictions,
 inbound routing, multi-agent call status and SDK call controls with a mock provider.
 These are not real telephone-network or two-way audio acceptance tests.
 
-The repository formatter has formatted the new Dart workspace. Updated Flutter
-analysis, tests and browser/Windows release builds run in GitHub Actions. Inspect
-their final results before merging this source into a release.
+The repository formatter has formatted the new Dart workspace. Flutter formatting, analysis and tests passed. Web, private-web and Windows release
+builds passed at code commit 54fa913de064dd9eea00a65bf94a99898475ef65.
+Later changes add operator-side provider setup and its tests without changing the
+Flutter workspace. The latest backend suite passed at commit
+9b2274d65eee7b1f2e1154644491144bd25c35b6.
 
-The previous full-history pattern scan inspected 297 reachable text blobs with no
+The latest full-history pattern scan inspected 333 reachable text blobs with no
 matches for its selected credential rules and skipped 14 binary/large blobs. This
 does not establish that every historical secret is absent.
 
@@ -94,3 +96,16 @@ Retention controls and a comprehensive manual security review remain release gat
 
 Provider pricing and cost estimates are in PROVIDERS.md. Nothing changed the AZD
 Global website, its DNS routes, Facebook or other external business systems.
+
+## Build downloads
+
+- Windows: https://github.com/awwmit-69/Powerline/actions/runs/41435552647/artifacts/13137100134
+- Private web: https://github.com/awwmit-69/Powerline/actions/runs/41435552647/artifacts/13135629004
+- Preview web: https://github.com/awwmit-69/Powerline/actions/runs/41435552647/artifacts/13135713257
+
+The operator-only configure-twilio workflow/script is prepared to update an
+existing owned line and its TwiML app, verify webhook readiness and read back the
+configuration. It refuses unrelated application/trunk routing and never purchases
+numbers or initiates calls/SMS. It has not run against the provider because the
+required protected credentials are absent. Credential entry belongs in protected
+GitHub Actions secrets or Cloudflare Worker secrets, never in source or chat.
