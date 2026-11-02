@@ -1,5 +1,10 @@
 import {authenticate,validateWebhook,e164,isStop,fail,HttpError,readJson} from './security.mjs';
 import {createVoiceToken,createIntent,voiceWebhook,authorizedNumber} from './voice.mjs';
+import {currentUser,authRoute} from './password-auth.mjs';
+import {loginPage} from './login.mjs';
+import {providerRuntime,providerSetting} from './provider-settings.mjs';
+import {setupPage} from './setup-page.mjs';
+import {serveEmbedded} from './embedded-assets.mjs';
 const json = (data,status=200) => new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'}});
 const xml = () => new Response('<?xml version="1.0" encoding="UTF-8"?><Response/>',{headers:{'Content-Type':'text/xml','Cache-Control':'no-store'}});
 const run = (env,sql,...values) => env.DB.prepare(sql).bind(...values);
@@ -37,16 +42,30 @@ export default {
   async fetch(request,env) {
     try {
       const url = new URL(request.url), path = url.pathname;
+      if(path==='/login'&&request.method==='GET')return loginPage();
+      if(path==='/api/auth/login'||path==='/api/auth/logout')return await authRoute(request,env,path);
+      if(path.startsWith('/webhooks/twilio/'))env=await providerRuntime(env);
       if(['/webhooks/twilio/voice','/webhooks/twilio/incoming','/webhooks/twilio/call-status'].includes(path))return await voiceWebhook(request,env,path);
       if (path === '/webhooks/twilio/sms' || path === '/webhooks/twilio/status') return await webhook(request,env,path);
-      const claims = await authenticate(request,env);
-      if (!env.DB) fail(503,'Storage not configured');
-      const user = await run(env,'SELECT * FROM users WHERE email=? AND active=1',claims.email.toLowerCase()).first();
-      if (!user) fail(403,'User has not been invited');
+      let user;
+      try{user=await currentUser(request,env);}catch(error){
+        if(env.AUTH_MODE==='password'&&!path.startsWith('/api/')&&error.status===401)return Response.redirect(url.origin+'/login',303);
+        throw error;
+      }
+      if(path==='/setup/twilio'){
+        if(user.role!=='admin')fail(403,'Administrator required');
+        return setupPage();
+      }
+      if(['/api/provider/connect','/api/provider/line','/api/provider/enable','/api/provider/disable','/api/provider/numbers'].includes(path)){
+        if(path==='/api/provider/numbers'&&request.method!=='GET')fail(405,'GET required');
+        if(path!=='/api/provider/numbers'&&request.method!=='POST')fail(405,'POST required');
+        return json(await providerSetting(request,env,user,path,request.method==='GET'?{}:await readJson(request,env)));
+      }
       if(!path.startsWith('/api/')){
-        if(!env.ASSETS)fail(404,'Not found');
+        if(!env.ASSETS)return serveEmbedded(request);
         return env.ASSETS.fetch(request);
       }
+      env=await providerRuntime(env);
       if(path==='/api/provider/status'&&request.method==='GET')return json({enabled:env.TELECOM_ENABLED==='true',sms_configured:!!(env.TWILIO_ACCOUNT_SID&&env.TWILIO_AUTH_TOKEN),voice_configured:!!(env.TWILIO_API_KEY_SID&&env.TWILIO_API_KEY_SECRET&&env.TWIML_APP_SID),emergency_calling:false});
       if(path==='/api/voice/token'&&request.method==='GET')return json(await createVoiceToken(env,user));
       if(path==='/api/voice/intent'&&request.method==='POST')return json(await createIntent(env,user,await readJson(request,env)),201);
@@ -60,7 +79,7 @@ export default {
         if(request.method!=='PATCH')fail(405,'Method not allowed');
         const input=await readJson(request,env);
         if(typeof input.id!=='string'||!['admin','agent'].includes(input.role)||typeof input.email!=='string'||input.email.length>254||!/^\S+@\S+\.\S+$/.test(input.email)||![true,false].includes(input.active))fail(400,'Valid ID, email, role and active status required');
-        if(input.active&&input.email.endsWith('.invalid'))fail(400,'Assign a real email before activation');
+        if(input.active&&input.email.endsWith('.invalid')&&env.AUTH_MODE!=='password')fail(400,'Assign a real email before activation');
         if(input.id===user.id&&(!input.active||input.role!=='admin'||input.email.toLowerCase()!==user.email))fail(409,'You cannot remove your own owner access');
         if(!await run(env,'SELECT id FROM users WHERE id=?',input.id).first())fail(404,'Account slot does not exist');
         await env.DB.batch([run(env,'UPDATE users SET email=?,role=?,active=? WHERE id=?',input.email.toLowerCase(),input.role,input.active?1:0,input.id),run(env,"INSERT INTO audit_logs(user_id,action,resource_id) VALUES(?,'user.update',?)",user.id,input.id)]);
@@ -94,6 +113,7 @@ export default {
       const number = await permitted(env,user,id,'sms');
       if (number.provider !== 'twilio') fail(409,'Provider adapter is not enabled');
       if (await run(env,'SELECT 1 FROM suppressions WHERE number_id=? AND remote=?',number.id,input.to).first()) fail(409,'Recipient has opted out');
+      if(env.SMS_TEST_DESTINATIONS&&!env.SMS_TEST_DESTINATIONS.split(',').includes(input.to))fail(403,'Recipient is not approved for test messaging');
       if (env.TELECOM_ENABLED !== 'true' || !env.TWILIO_AUTH_TOKEN || !env.TWILIO_ACCOUNT_SID) fail(503,'Paid telecom traffic is disabled');
       const requestId = request.headers.get('Idempotency-Key');
       if (!/^[a-zA-Z0-9_-]{16,100}$/.test(requestId || '')) fail(400,'Idempotency-Key required');

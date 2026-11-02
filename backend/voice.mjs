@@ -52,6 +52,7 @@ export async function voiceWebhook(request,env,path) {
   const sid=p.get('CallSid');
   if(!/^CA[0-9a-f]{32}$/i.test(sid||''))fail(400,'Invalid call identifier');
   const callback=escape(env.PUBLIC_ORIGIN+'/webhooks/twilio/call-status');
+  const callLimit=Math.min(600,Math.max(30,Number(env.MAX_CALL_SECONDS)||600));
   if(path==='/webhooks/twilio/voice') {
     const grant=p.get('CallGrant')||'';
     if(!/^[\w-]{43}$/.test(grant))fail(403,'Missing authorized call intent');
@@ -64,7 +65,7 @@ export async function voiceWebhook(request,env,path) {
       if(!user)fail(403,'Inactive user');
       const number=await authorizedNumber(env,user,old.number_id,'voice');
       if(terminal.includes(old.status))return twiml('<Hangup/>');
-      return twiml(`<Dial callerId="${escape(number.e164)}" answerOnBridge="true" timeLimit="600" timeout="30"><Number statusCallback="${callback}" statusCallbackMethod="POST" statusCallbackEvent="initiated ringing answered completed">${escape(old.remote)}</Number></Dial>`);
+      return twiml(`<Dial callerId="${escape(number.e164)}" answerOnBridge="true" timeLimit="${callLimit}" timeout="30"><Number statusCallback="${callback}" statusCallbackMethod="POST" statusCallbackEvent="initiated ringing answered completed">${escape(old.remote)}</Number></Dial>`);
     }
     const intent=await q(env,'SELECT * FROM call_intents WHERE token_hash=? AND used=0 AND expires_at>=unixepoch()',hash).first();
     if(!intent||p.get('From')!=='client:pl_'+intent.user_id||p.get('To')!==intent.remote)fail(403,'Invalid or expired call intent');
@@ -75,7 +76,7 @@ export async function voiceWebhook(request,env,path) {
     const claim=await q(env,'UPDATE call_intents SET used=1 WHERE token_hash=? AND used=0 RETURNING token_hash',hash).first();
     if(!claim)fail(409,'Call intent has already been used');
     await q(env,"INSERT INTO calls(sid,number_id,user_id,remote,direction,status,intent_hash) VALUES(?,?,?,?,'outbound','initiated',?)",sid,number.id,user.id,intent.remote,hash).run();
-    return twiml(`<Dial callerId="${escape(number.e164)}" answerOnBridge="true" timeLimit="600" timeout="30"><Number statusCallback="${callback}" statusCallbackMethod="POST" statusCallbackEvent="initiated ringing answered completed">${escape(intent.remote)}</Number></Dial>`);
+    return twiml(`<Dial callerId="${escape(number.e164)}" answerOnBridge="true" timeLimit="${callLimit}" timeout="30"><Number statusCallback="${callback}" statusCallbackMethod="POST" statusCallbackEvent="initiated ringing answered completed">${escape(intent.remote)}</Number></Dial>`);
   }
   if(path==='/webhooks/twilio/incoming') {
     const number=await q(env,'SELECT * FROM numbers WHERE e164=? AND active=1 AND voice=1',p.get('To')).first();
@@ -84,7 +85,7 @@ export async function voiceWebhook(request,env,path) {
     await q(env,"INSERT OR IGNORE INTO calls(sid,number_id,remote,direction,status,ring_targets) VALUES(?,?,?,'inbound','ringing',?)",sid,number.id,p.get('From'),Math.max(1,users.results.length)).run();
     if(!users.results.length)return twiml('<Reject reason="busy"/>');
     const clients=users.results.map(u=>`<Client statusCallback="${callback}" statusCallbackMethod="POST" statusCallbackEvent="initiated ringing answered completed">pl_${escape(u.id)}</Client>`).join('');
-    return twiml(`<Dial answerOnBridge="true" timeLimit="600" timeout="25">${clients}</Dial>`);
+    return twiml(`<Dial answerOnBridge="true" timeLimit="${callLimit}" timeout="25">${clients}</Dial>`);
   }
   const status=p.get('CallStatus');
   if(!['initiated','queued','ringing','in-progress',...terminal].includes(status))fail(400,'Invalid call status');

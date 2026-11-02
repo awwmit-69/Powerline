@@ -152,7 +152,7 @@ class _LiveScreenState extends State<LiveScreen> {
                   controller: email,
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
-                      labelText: 'Individual login email')),
+                      labelText: 'Contact email (optional)')),
               actions: [
                 TextButton(
                     onPressed: () => Navigator.pop(context),
@@ -199,9 +199,13 @@ class _LiveScreenState extends State<LiveScreen> {
     }
   }
 
+  Future<void> _navigate(String path) async {
+    await launchUrl(Uri.base.resolve(path), mode: LaunchMode.externalApplication, webOnlyWindowName: '_self');
+  }
+
   Future<void> _open() async {
     final url = kIsWeb
-        ? Uri.base
+        ? Uri.base.resolve('/login')
         : Uri.parse(const String.fromEnvironment(
             'POWERLINE_APP_URL',
             defaultValue: 'https://powerline.azdglobal.com/#/live',
@@ -229,6 +233,14 @@ class _LiveScreenState extends State<LiveScreen> {
     final enabled = _provider['enabled'] == true;
     return Scaffold(
       appBar: AppBar(title: const Text('POWERLINE'), actions: [
+        if (kIsWeb && _session?['role'] == 'admin')
+          TextButton(onPressed: () => _navigate('/setup/twilio'), child: const Text('Twilio setup')),
+        if (kIsWeb && _session != null)
+          TextButton(onPressed: () => _perform(() async {
+            await _client.request('POST', '/api/auth/logout', {});
+            _client.control('hangup');
+            await _navigate('/login');
+          }), child: const Text('Sign out')),
         if (kIsWeb)
           IconButton(
               onPressed: _busy ? null : _load,
@@ -245,7 +257,7 @@ class _LiveScreenState extends State<LiveScreen> {
               const SizedBox(height: 8),
               Text(_session == null
                   ? 'Sign in to your private workspace.'
-                  : '${_session!['email']} · ${_session!['role']}'),
+                  : '${_session!['id']} · ${_session!['role']}'),
               if (_busy) const LinearProgressIndicator(),
               if (_error != null)
                 Padding(
@@ -407,14 +419,14 @@ class _LiveScreenState extends State<LiveScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                    '${user['id']} · ${user['role']} · ${user['active'] == 1 ? user['email'] : 'Awaiting email'}'),
+                                    '${user['id']} · ${user['role']} · ${user['active'] == 1 ? 'Active' : 'Disabled'}'),
                                 if (user['id'] != _session!['id'])
                                   Wrap(spacing: 8, children: [
                                     TextButton(
                                         onPressed: _busy
                                             ? null
                                             : () => _editUser(user),
-                                        child: const Text('Set login email')),
+                                        child: const Text('Contact details')),
                                     TextButton(
                                         onPressed: _busy || _number == null
                                             ? null

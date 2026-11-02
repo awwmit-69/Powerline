@@ -18,7 +18,8 @@ migrations_dir = "migrations"
 
 [vars]
 TELECOM_ENABLED = "false"
+AUTH_MODE = "password"
 PUBLIC_ORIGIN = "https://powerline.azdglobal.com"
-# Set ACCESS_ISSUER and ACCESS_AUD only after the private Access application exists.
+# AUTH_PEPPER must be a Worker secret, never committed here.
 # Bind a dedicated DB to schema.sql; never reuse the AZD Global website database.
 # Provider credentials belong in Worker secrets, never in this file.
