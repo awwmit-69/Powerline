@@ -17,7 +17,9 @@ import 'features/workspaces/rep_workspace_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: const bool.fromEnvironment('POWERLINE_PRODUCTION') ? '/live' : '/dialpad',
+    initialLocation: const bool.fromEnvironment('POWERLINE_PRODUCTION')
+        ? '/live'
+        : '/dialpad',
     routes: [
       GoRoute(path: '/live', builder: (c, s) => const LiveScreen()),
       ShellRoute(

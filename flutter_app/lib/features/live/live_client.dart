@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'live_client_stub.dart'
-    if (dart.library.html) 'live_client_web.dart' as implementation;
+import 'live_client_stub.dart' if (dart.library.html) 'live_client_web.dart'
+    as implementation;
 
 abstract class LiveClient {
   Stream<Map<String, dynamic>> get events;
