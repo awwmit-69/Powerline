@@ -1,0 +1,12 @@
+name = "powerline-api"
+main = "worker.mjs"
+compatibility_date = "2026-11-01"
+workers_dev = false
+preview_urls = false
+
+[vars]
+TELECOM_ENABLED = "false"
+PUBLIC_ORIGIN = "https://powerline.azdglobal.com"
+# Set ACCESS_ISSUER and ACCESS_AUD only after the private Access application exists.
+# Bind a dedicated DB to schema.sql; never reuse the AZD Global website database.
+# Provider credentials belong in Worker secrets, never in this file.
