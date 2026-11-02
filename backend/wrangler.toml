@@ -4,6 +4,18 @@ compatibility_date = "2026-11-01"
 workers_dev = false
 preview_urls = false
 
+[assets]
+directory = "../flutter_app/build/web"
+binding = "ASSETS"
+run_worker_first = true
+not_found_handling = "single-page-application"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "powerline-db"
+database_id = "4c0d2b7c-66f0-465e-a00f-364356de6c19"
+migrations_dir = "migrations"
+
 [vars]
 TELECOM_ENABLED = "false"
 PUBLIC_ORIGIN = "https://powerline.azdglobal.com"

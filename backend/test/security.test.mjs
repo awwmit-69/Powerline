@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createHmac} from 'node:crypto';
-import {authenticate,base64url,validateWebhook,e164,isStop} from '../security.mjs';
+import {authenticate,base64url,validateWebhook,e164,isStop,readLimited} from '../security.mjs';
 import worker from '../worker.mjs';
 import {createVoiceToken,createIntent,voiceWebhook} from '../voice.mjs';
 import {DatabaseSync} from 'node:sqlite';
@@ -221,4 +221,24 @@ test('agents cannot manage accounts and owner cannot disable self',async()=>{
   const patch=new Request(req,{method:'PATCH'});
   assert.equal((await worker.fetch(patch,{...env,DB})).status,409);
   sql.close();
+});
+test('an early rejected agent leg cannot mark another ringing agent as a missed call',async()=>{
+  const {sql,DB}=voiceDatabase();
+  sql.exec("INSERT INTO users VALUES('second','second@example.com','agent',1); INSERT INTO number_permissions VALUES('second','line')");
+  await voiceWebhook(await signedVoice('/webhooks/twilio/incoming',{To:'+12025550124',From:'+12025550123'}),{...voiceEnv,DB},'/webhooks/twilio/incoming');
+  const parent='CA'+'f'.repeat(32);
+  await voiceWebhook(await signedVoice('/webhooks/twilio/call-status',{CallSid:'CA'+'a'.repeat(32),ParentCallSid:parent,CallStatus:'busy',SequenceNumber:'1'}),{...voiceEnv,DB},'/webhooks/twilio/call-status');
+  assert.equal(sql.prepare('SELECT status FROM calls').get().status,'ringing');
+  await voiceWebhook(await signedVoice('/webhooks/twilio/call-status',{CallSid:'CA'+'b'.repeat(32),ParentCallSid:parent,CallStatus:'in-progress',SequenceNumber:'1'}),{...voiceEnv,DB},'/webhooks/twilio/call-status');
+  assert.equal(sql.prepare('SELECT status FROM calls').get().status,'in-progress');
+  await voiceWebhook(await signedVoice('/webhooks/twilio/call-status',{CallSid:'CA'+'b'.repeat(32),ParentCallSid:parent,CallStatus:'completed',SequenceNumber:'2',CallDuration:'34'}),{...voiceEnv,DB},'/webhooks/twilio/call-status');
+  assert.equal(sql.prepare('SELECT status,duration FROM calls').get().duration,34);
+  sql.close();
+});
+test('large streams are rejected before the complete body is buffered',async()=>{
+  let canceled=false;
+  const stream=new ReadableStream({start(c){c.enqueue(new Uint8Array(5000));c.enqueue(new Uint8Array(5000));},cancel(){canceled=true;}});
+  const req=new Request('https://example.com',{method:'POST',body:stream,duplex:'half'});
+  await assert.rejects(readLimited(req,8192),e=>e.status===413);
+  assert.equal(canceled,true);
 });

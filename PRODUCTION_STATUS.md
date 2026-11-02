@@ -1,97 +1,96 @@
-# PowerLine production status
+# PowerLine build and activation status
 
-## Release gate: NOT READY
+## Not activated for real telecom traffic
 
-This branch preserves the Flutter application and adds a security foundation. It
-does not finish the production phone system. No calls, SMS, purchases, DNS changes,
-provider configuration changes, or production deployments were made in this work.
+The existing Flutter application is retained. A new /live route provides the
+server-backed communications workspace; preview screens remain separate from it.
+No successful real call or SMS delivery is claimed. TELECOM_ENABLED remains false.
 
-## Implemented
+## Implemented in source
 
-- Retire the legacy unauthenticated Twilio SMS and ElevenLabs TTS functions with HTTP 410 and no CORS.
-  This closes the source vulnerability only. The replacement must also be deployed
-  to the existing Twilio Function; repository changes do not secure a running copy.
-- Remove automatic use of the public hardcoded voice token and SMS endpoints.
-  Compile-time POWERLINE_TOKEN_URL and POWERLINE_SMS_URL default to disabled.
-- Require HTTPS and same-origin access for browser SMS. Add a random request key.
-- Stop treating provider acceptance as delivery; live messaging is not reported
-  connected before verification. The existing UI still needs receipt synchronization.
-- Add a Cloudflare Worker backend with RS256 Cloudflare Access JWT verification,
-  exact issuer/audience/expiry checks, invited-user lookup, active-user enforcement,
-  admin/agent roles, per-number read/send permissions and no cross-origin CORS.
-- Add a D1 schema for users, numbers, permissions, messages, suppressions, audit
-  events, durable rate limits and duplicate-send claims.
-- Add signed Twilio inbound SMS and delivery-status webhooks with account checks,
-  persistent STOP suppression and duplicate inbound-message protection.
-- Add authenticated session, number listing and per-number message APIs. SMS send
-  is disabled unless TELECOM_ENABLED is explicitly true and secrets are present.
-- Add tests using real SQLite and a mock provider; no paid traffic is generated.
+- Manual browser calls through the existing Twilio JavaScript SDK, incoming
+  registration, answer/reject, mute/unmute, hang-up, DTMF, call state and duration.
+- Short-lived server-signed Twilio voice tokens. Outbound calls require a 60-second
+  single-use intent bound to the authenticated user, assigned number and destination.
+  TwiML selects caller ID from server permissions, never a client-provided identity.
+- Signed Twilio outgoing/incoming/status routes, server call history, per-number
+  inbound routing and status aggregation when multiple agents ring.
+- Authenticated SMS sending, incoming replies, delivery callbacks, server history
+  polling, opt-out persistence, send limits, duplicate-attempt protection and audit
+  records. Provider acceptance is displayed separately from delivery.
+- Five team account slots and admin email/line-permission management. Agents cannot
+  read a line until assigned to it. Inactive accounts fail closed.
+- An authenticated asset-serving Worker configuration and a separate root-path
+  production web artifact. Preview publishing remains limited to main.
+- The Windows app links to the protected browser calling workspace. Browser audio
+  can run in Edge/Chrome or an installed web app. Native Windows Twilio audio is
+  **not implemented** and must not be represented as working.
 
-## Test results
+## Provisioned resources
 
-22 Node tests passed locally: JWT validation/rejection, signature validation,
-legacy endpoint retirement, ACL isolation, unknown-user rejection, disabled
-traffic, suppression enforcement, SMS persistence, send deduplication and inbound
-STOP retry behavior. CI runs the same suite on Node 24.
+A dedicated Cloudflare D1 database, powerline-db, was created and initialized with
+the SMS and voice schemas. It is separate from the AZD Global website database.
+Five account records were verified in D1:
 
-Flutter and Dart SDKs are unavailable in the execution container. GitHub Actions passed formatting, analysis and Flutter tests at commit
-ffe692bc9595e1d51c784bcdba49fec51105cdfd. Web and Windows release builds, Windows packaging and artifact uploads passed.
-Artifacts are available in workflow run 41424922465; Windows runtime functionality
-and telecom capabilities have not been tested. No live acceptance
-tests, browser audio checks, Windows runtime tests or deployed-auth tests passed.
+| ID | Role | State |
+| --- | --- | --- |
+| owner | Administrator | Owner email assigned; authentication activation blocked |
+| agent01 | Agent | Disabled until an individual email is assigned |
+| agent02 | Agent | Disabled until an individual email is assigned |
+| agent03 | Agent | Disabled until an individual email is assigned |
+| agent04 | Agent | Disabled until an individual email is assigned |
 
-## Infrastructure inspection
+These are account records, not five working authenticated sessions. No shared
+password or fabricated email login was activated. The owner email is held in the
+private database, not seeded into public source.
 
-The connected Cloudflare account has active azdglobal.com and existing AZD Global
-Workers/Pages/D1 resources. No PowerLine Worker/Pages deployment was found.
-Cloudflare reports Access is not enabled for the account. The business website,
-its routes, DNS and database were left untouched.
+## Automated verification
 
-GitHub connector read/write access works. Direct Git cloning is denied by the
-execution network. Current relevant source and recent commit metadata were read
-through GitHub. The full-history CI pattern scan screened 297 reachable text blobs, skipped 14
-binary/large blobs, and found zero matches for its selected credential patterns.
-This is automated screening, not proof that Git history is secret-free; manual
-security review and provider-side credential inventory remain incomplete.
+32 local backend/browser-bridge tests pass, covering sessions, webhook signatures,
+ACL isolation, SMS persistence/opt-outs/delivery ordering, duplicate-send protection,
+voice token signatures, caller-ID enforcement, single-use grants, DNC restrictions,
+inbound routing, multi-agent call status and SDK call controls with a mock provider.
+These are not real telephone-network or two-way audio acceptance tests.
 
-## Remaining engineering
+The repository formatter has formatted the new Dart workspace. Updated Flutter
+analysis, tests and browser/Windows release builds run in GitHub Actions. Inspect
+their final results before merging this source into a release.
 
-- Protected voice-token issuance, authorized outgoing TwiML, incoming call routing,
-  browser registration/answer/reject, provider call history and reconnect handling.
-- Server-backed frontend repository and message synchronization, delivery receipts,
-  contact import/export/sync, voicemail, routing and multi-user administration.
-- A durable outbox/reconciliation path for ambiguous sends. A pending send claim
-  deliberately blocks automatic retries, but no reconciliation UI exists yet.
-- Delivery callbacks are persisted before updating messages, including callbacks
-  that arrive before the outbound insert. Provider reconciliation is still needed
-  for ambiguous network responses and failed database writes after sending.
-- Rate-limit/attempt/audit retention cleanup and user-facing retention controls.
-- SignalMash/VoIP.ms adapters. Published pricing and integration constraints are in PROVIDERS.md; account-specific quotes remain unverified.
-- Deployment automation, private Flutter build, full security review and acceptance.
+The previous full-history pattern scan inspected 297 reachable text blobs with no
+matches for its selected credential rules and skipped 14 binary/large blobs. This
+does not establish that every historical secret is absent.
 
-## Configuration needed before private deployment and live tests
+## Confirmed activation blockers
 
-1. Enable an appropriate private identity system. For this Worker, configure
-   Cloudflare Access and its exact allowed owner identity, issuer and audience.
-2. Create a dedicated PowerLine D1 database, apply backend/schema.sql, and bind DB.
-   Provision the verified owner in users; explicitly assign authorized numbers.
-3. Obtain Twilio account ownership/configuration through a protected workflow.
-   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and later voice API key credentials must
-   be stored as Worker secrets, never in Flutter, GitHub source or chat text.
-4. Configure the provider webhooks at the exact PUBLIC_ORIGIN paths, with POST form
-   encoding. App APIs need Access; provider webhooks need signature validation
-   without an interactive Access login. The Worker verifies every webhook itself.
-5. Deploy the legacy Function retirement separately using provider access.
-6. Approve the exact usage cost and live test recipient before enabling traffic.
+1. Cloudflare Access is not enabled. Automatic approval review rejected creating
+   the account-level Zero Trust organization, requesting explicit approval for
+   that exact persistent authentication resource. No alternate route was used to
+   bypass that rejection. No Access organization or application was created.
+2. The protected GitHub Twilio preflight found all six configured values absent:
+   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_API_KEY_SID,
+   TWILIO_API_KEY_SECRET, TWIML_APP_SID and POWERLINE_FROM_NUMBER. Provider account
+   access could not be verified. No secret values were printed in logs.
+3. No owned Twilio number has been imported into D1. Number ownership, capabilities,
+   messaging registration and signed webhook configuration require provider access.
+4. Four individual agent login emails are not yet supplied. Their slots remain
+   disabled. Identity-provider policy must permit the authorized team as well as
+   the owner; database activation alone is insufficient.
+5. Live testing needs an approved destination and usage budget. Outbound voice is
+   limited to TEST_DESTINATIONS unless unrestricted calling is explicitly enabled.
+   Calls are capped at ten minutes in TwiML. No paid traffic or number purchase
+   has been initiated.
 
-Do not set TELECOM_ENABLED=true until unfinished engineering and release checks
-above have been completed. These tests demonstrate the implemented boundary,
-not production readiness, emergency calling, carrier registration or consent.
+## Remaining limitations
 
-## Build artifacts
+Private deployment, owner sign-in, live Twilio routing, two-way audio, real SMS
+delivery, browser microphone behavior and Windows runtime calling are unverified.
+Voicemail, recording, hold, transfer, native Windows audio, CRM synchronization and
+campaign automation are not completed in this build. Emergency calling is unavailable.
 
-- Web: https://github.com/awwmit-69/Powerline/actions/runs/41424922465/artifacts/13130963374
-- Windows: https://github.com/awwmit-69/Powerline/actions/runs/41424922465/artifacts/13131807373
+Public legacy SMS and TTS Functions are retired in source only. Running provider
+copies still require a separate update through protected Twilio access. Failed or
+ambiguous provider sends need operator reconciliation; automatic retries are blocked.
+Retention controls and a comprehensive manual security review remain release gates.
 
-These are CI build artifacts for tested code commit ffe692bc9595e1d51c784bcdba49fec51105cdfd,
-not a deployed production release. Later commits only update this report and pricing.
+Provider pricing and cost estimates are in PROVIDERS.md. Nothing changed the AZD
+Global website, its DNS routes, Facebook or other external business systems.

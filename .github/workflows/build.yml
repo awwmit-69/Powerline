@@ -69,6 +69,30 @@ jobs:
         with:
           path: flutter_app/build/web
 
+  private-web:
+    name: Build private web workspace
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Complete web runner
+        working-directory: flutter_app
+        run: flutter create --platforms=web .
+      - name: Install dependencies
+        working-directory: flutter_app
+        run: flutter pub get
+      - name: Build authenticated workspace for custom domain
+        working-directory: flutter_app
+        run: flutter build web --release --base-href / --dart-define=POWERLINE_PRODUCTION=true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PowerLine_Private_Web
+          path: flutter_app/build/web
+
   deploy:
     name: Deploy GitHub Pages
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'

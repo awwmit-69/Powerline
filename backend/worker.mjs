@@ -39,11 +39,14 @@ export default {
       const url = new URL(request.url), path = url.pathname;
       if(['/webhooks/twilio/voice','/webhooks/twilio/incoming','/webhooks/twilio/call-status'].includes(path))return await voiceWebhook(request,env,path);
       if (path === '/webhooks/twilio/sms' || path === '/webhooks/twilio/status') return await webhook(request,env,path);
-      if (!path.startsWith('/api/')) fail(404,'Not found');
       const claims = await authenticate(request,env);
       if (!env.DB) fail(503,'Storage not configured');
       const user = await run(env,'SELECT * FROM users WHERE email=? AND active=1',claims.email.toLowerCase()).first();
       if (!user) fail(403,'User has not been invited');
+      if(!path.startsWith('/api/')){
+        if(!env.ASSETS)fail(404,'Not found');
+        return env.ASSETS.fetch(request);
+      }
       if(path==='/api/provider/status'&&request.method==='GET')return json({enabled:env.TELECOM_ENABLED==='true',sms_configured:!!(env.TWILIO_ACCOUNT_SID&&env.TWILIO_AUTH_TOKEN),voice_configured:!!(env.TWILIO_API_KEY_SID&&env.TWILIO_API_KEY_SECRET&&env.TWIML_APP_SID),emergency_calling:false});
       if(path==='/api/voice/token'&&request.method==='GET')return json(await createVoiceToken(env,user));
       if(path==='/api/voice/intent'&&request.method==='POST')return json(await createIntent(env,user,await readJson(request,env)),201);
