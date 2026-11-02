@@ -2,7 +2,7 @@ name: Powerline Build
 
 on:
   push:
-    branches: [main]
+    branches: [main, codex/production-security]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -63,13 +63,13 @@ jobs:
           name: Powerline_Web_Build
           path: flutter_app/build/web
       - uses: actions/upload-pages-artifact@v3
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         with:
           path: flutter_app/build/web
 
   deploy:
     name: Deploy GitHub Pages
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: web
     runs-on: ubuntu-latest
     permissions:
