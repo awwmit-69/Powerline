@@ -43,4 +43,3 @@ class _WebTwilioMessagingClient implements TwilioMessagingClient {
     return sid;
   }
 }
-

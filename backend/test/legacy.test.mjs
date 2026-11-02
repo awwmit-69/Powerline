@@ -12,3 +12,10 @@ test('legacy SMS function cannot contact Twilio or emit permissive CORS',()=>{
   assert.equal(result.status,410);
   assert.equal(result.headers['Access-Control-Allow-Origin'],undefined);
 });
+test('legacy TTS cannot trigger paid synthesis',()=>{
+  const tts=require('../../twilio-functions/elevenlabs-tts.js');
+  let result;
+  tts.handler({ELEVENLABS_API_KEY:'test',ELEVENLABS_VOICE_ID:'test'},{text:'hello'},(_error,response)=>{result=response;});
+  assert.equal(result.status,410);
+  assert.equal(result.headers['Access-Control-Allow-Origin'],undefined);
+});

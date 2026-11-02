@@ -8,7 +8,7 @@ provider configuration changes, or production deployments were made in this work
 
 ## Implemented
 
-- Retire the legacy unauthenticated Twilio SMS function with HTTP 410 and no CORS.
+- Retire the legacy unauthenticated Twilio SMS and ElevenLabs TTS functions with HTTP 410 and no CORS.
   This closes the source vulnerability only. The replacement must also be deployed
   to the existing Twilio Function; repository changes do not secure a running copy.
 - Remove automatic use of the public hardcoded voice token and SMS endpoints.
@@ -29,7 +29,7 @@ provider configuration changes, or production deployments were made in this work
 
 ## Test results
 
-21 Node tests passed locally: JWT validation/rejection, signature validation,
+22 Node tests passed locally: JWT validation/rejection, signature validation,
 legacy endpoint retirement, ACL isolation, unknown-user rejection, disabled
 traffic, suppression enforcement, SMS persistence, send deduplication and inbound
 STOP retry behavior. CI runs the same suite on Node 24.

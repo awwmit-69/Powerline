@@ -27,12 +27,11 @@ class TwilioCallEngine implements CallEngine {
         provider: 'Twilio Voice',
         mockMode: false,
         connected: kIsWeb && _initialized,
-        missingConfiguration:
-            !kIsWeb
-                ? const ['PowerLine Web is required']
-                : tokenUrl.isEmpty
-                    ? const ['Authenticated token service is required']
-                    : const [],
+        missingConfiguration: !kIsWeb
+            ? const ['PowerLine Web is required']
+            : tokenUrl.isEmpty
+                ? const ['Authenticated token service is required']
+                : const [],
         unsupportedCapabilities: const [
           'hold',
           'transfer',
@@ -158,4 +157,3 @@ class TwilioCallEngine implements CallEngine {
     await _errorController.close();
   }
 }
-

@@ -300,4 +300,3 @@ MockMessagingProvider externalWebhookMessaging() => MockMessagingProvider(
       'Generic webhook provider',
       ['Webhook URL', 'Signing secret'],
     );
-

@@ -9,4 +9,3 @@ exports.handler = function (_context, _event, callback) {
   response.setBody({error: 'Legacy SMS endpoint retired. Use the authenticated PowerLine API.'});
   return callback(null, response);
 };
-

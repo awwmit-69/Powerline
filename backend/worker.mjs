@@ -62,6 +62,7 @@ export default {
       if (!input || typeof input !== 'object' || !e164(input.to) || typeof input.body !== 'string' || !input.body.trim() || input.body.length>1600) fail(400,'Valid destination and body required');
       // Match the existing Flutter client's from field, but authorize it server-side.
       const id = input.number_id || (await run(env,'SELECT id FROM numbers WHERE e164=?',input.from || '').first())?.id;
+      if (typeof id !== 'string' || !id) fail(400,'An authorized source number is required');
       const number = await permitted(env,user,id,'sms');
       if (number.provider !== 'twilio') fail(409,'Provider adapter is not enabled');
       if (await run(env,'SELECT 1 FROM suppressions WHERE number_id=? AND remote=?',number.id,input.to).first()) fail(409,'Recipient has opted out');
