@@ -1,16 +1,24 @@
 # Powerline
 
 Powerline is AZD Global's cross-platform communications workspace. This
-repository currently ships a deterministic product preview for web and Windows.
+repository includes a deterministic preview and an authenticated Twilio workspace
+for web, with a browser handoff from Windows. The live service is not deployed or
+verified against a real telephone line.
 
 ## Current status
 
 - Dashboard, dialpad, messages, calls, voicemail, contacts, campaigns, agents,
   analytics, settings, and provider configuration screens are available with
   fictional local demo data.
-- Calls and messages are simulated. No live telecom traffic leaves the app.
-- Provider cards describe required configuration, but production SIP/WebRTC,
-  SMS, emergency calling, and CRM connectivity are not implemented.
+- The default preview uses simulated calls and messages. The separate `/live`
+  workspace uses server APIs and fails closed when private sign-in, provider
+  configuration or number permissions are missing.
+- `/live` implements manual Twilio browser calling, incoming call controls,
+  two-way SMS storage/status synchronization and team-number permissions.
+  Live provider traffic remains disabled and unverified. Native Windows audio,
+  emergency calling and CRM synchronization are not implemented.
+- See [PRODUCTION_STATUS.md](PRODUCTION_STATUS.md) for builds, provisioned account
+  slots, activation blockers and test evidence.
 - The app must not be represented as a production phone system until provider
   registration, inbound and outbound calls, two-way audio, call lifecycle, and
   reconnect behavior have been tested with a real provider.

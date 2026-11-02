@@ -200,7 +200,7 @@ class TwilioMessagingProvider implements MessagingProvider {
   final _events = StreamController<MessagingEvent>.broadcast();
 
   TwilioMessagingProvider({
-    this.endpoint = 'https://powerline-voice-2020.twil.io/sms',
+    this.endpoint = const String.fromEnvironment('POWERLINE_SMS_URL'),
     TwilioMessagingClient? client,
   }) : _client = client ?? createTwilioMessagingClient();
 
@@ -208,11 +208,13 @@ class TwilioMessagingProvider implements MessagingProvider {
   String get providerId => 'twilio';
 
   @override
-  EngineStatus get status => const EngineStatus(
+  EngineStatus get status => EngineStatus(
         provider: 'Twilio Messaging',
         mockMode: false,
-        connected: true,
-        missingConfiguration: [],
+        connected: false,
+        missingConfiguration: endpoint.isEmpty
+            ? const ['Authenticated messaging service is required']
+            : const ['Live delivery has not been verified'],
         simulatedCapabilities: [],
         unsupportedCapabilities: ['MMS attachments'],
       );
@@ -223,13 +225,16 @@ class TwilioMessagingProvider implements MessagingProvider {
   @override
   Future<String> sendSms(OutboundMessageRequest req) async {
     try {
+      if (endpoint.isEmpty) {
+        throw StateError('Authenticated messaging service is not configured.');
+      }
       final sid = await _client.send(
         endpoint: endpoint,
         to: req.to,
         from: req.from,
         body: req.body,
       );
-      _events.add(MessagingEvent(kind: 'delivery', messageId: sid));
+      _events.add(MessagingEvent(kind: 'accepted', messageId: sid));
       return sid;
     } catch (error) {
       _events.add(

@@ -8,6 +8,7 @@ import 'features/campaigns/campaigns_screen.dart';
 import 'features/contacts/contacts_screen.dart';
 import 'features/dialpad/dialpad_screen.dart';
 import 'features/home/home_screen.dart';
+import 'features/live/live_screen.dart';
 import 'features/messages/messages_screen.dart';
 import 'features/settings/settings_screen.dart';
 import 'features/shell/app_shell.dart';
@@ -16,8 +17,11 @@ import 'features/workspaces/rep_workspace_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/dialpad',
+    initialLocation: const bool.fromEnvironment('POWERLINE_PRODUCTION')
+        ? '/live'
+        : '/dialpad',
     routes: [
+      GoRoute(path: '/live', builder: (c, s) => const LiveScreen()),
       ShellRoute(
         builder: (context, state, child) =>
             AppShell(location: state.uri.path, child: child),

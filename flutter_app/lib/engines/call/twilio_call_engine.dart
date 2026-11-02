@@ -8,7 +8,7 @@ import 'twilio_platform.dart';
 import 'twilio_platform_contract.dart';
 
 class TwilioCallEngine implements CallEngine {
-  static const tokenUrl = 'https://powerline-voice-2020.twil.io/token';
+  static const tokenUrl = String.fromEnvironment('POWERLINE_TOKEN_URL');
 
   final TwilioPlatform _platform;
   final _stateController = StreamController<ActiveCallSnapshot>.broadcast();
@@ -27,8 +27,11 @@ class TwilioCallEngine implements CallEngine {
         provider: 'Twilio Voice',
         mockMode: false,
         connected: kIsWeb && _initialized,
-        missingConfiguration:
-            kIsWeb ? const [] : const ['PowerLine Web is required'],
+        missingConfiguration: !kIsWeb
+            ? const ['PowerLine Web is required']
+            : tokenUrl.isEmpty
+                ? const ['Authenticated token service is required']
+                : const [],
         unsupportedCapabilities: const [
           'hold',
           'transfer',
@@ -46,6 +49,9 @@ class TwilioCallEngine implements CallEngine {
   @override
   Future<void> initialize() async {
     if (_initialized) return;
+    if (tokenUrl.isEmpty) {
+      throw StateError('Authenticated voice service is not configured.');
+    }
     await _platform.initialize(tokenUrl, _onState, (message) {
       _errorController.add(CallEngineError('twilio', message));
     });

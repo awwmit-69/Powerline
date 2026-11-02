@@ -1,0 +1,11 @@
+PRAGMA foreign_keys = ON;
+CREATE TABLE users (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, role TEXT NOT NULL CHECK(role IN ('admin','agent')), active INTEGER NOT NULL DEFAULT 1);
+CREATE TABLE numbers (id TEXT PRIMARY KEY, e164 TEXT NOT NULL UNIQUE, provider TEXT NOT NULL DEFAULT 'twilio', voice INTEGER NOT NULL DEFAULT 0, sms INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE number_permissions (user_id TEXT NOT NULL REFERENCES users(id), number_id TEXT NOT NULL REFERENCES numbers(id), PRIMARY KEY(user_id,number_id));
+CREATE TABLE messages (sid TEXT PRIMARY KEY, number_id TEXT NOT NULL REFERENCES numbers(id), remote TEXT NOT NULL, direction TEXT NOT NULL CHECK(direction IN ('inbound','outbound')), body TEXT NOT NULL, status TEXT NOT NULL, created_at INTEGER NOT NULL DEFAULT (unixepoch()));
+CREATE INDEX messages_by_number ON messages(number_id,created_at);
+CREATE TABLE delivery_events (sid TEXT PRIMARY KEY, status TEXT NOT NULL, received_at INTEGER NOT NULL DEFAULT (unixepoch()));
+CREATE TABLE suppressions (number_id TEXT NOT NULL REFERENCES numbers(id), remote TEXT NOT NULL, created_at INTEGER NOT NULL DEFAULT (unixepoch()), PRIMARY KEY(number_id,remote));
+CREATE TABLE rate_limits (user_id TEXT NOT NULL, window INTEGER NOT NULL, count INTEGER NOT NULL DEFAULT 1, PRIMARY KEY(user_id,window));
+CREATE TABLE send_attempts (user_id TEXT NOT NULL, request_id TEXT NOT NULL, state TEXT NOT NULL, sid TEXT, created_at INTEGER NOT NULL DEFAULT (unixepoch()), PRIMARY KEY(user_id,request_id));
+CREATE TABLE audit_logs (id INTEGER PRIMARY KEY, user_id TEXT NOT NULL, action TEXT NOT NULL, resource_id TEXT NOT NULL, created_at INTEGER NOT NULL DEFAULT (unixepoch()));

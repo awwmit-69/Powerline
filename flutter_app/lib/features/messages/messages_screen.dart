@@ -287,7 +287,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
         OutboundMessageRequest(
           to: conv.remoteE164,
           from: liveSms
-              ? '+16052058454'
+              ? const String.fromEnvironment('POWERLINE_FROM_NUMBER')
               : stateOf(ref).numbers.firstOrNull?.e164 ?? '+10005550100',
           body: text,
         ),

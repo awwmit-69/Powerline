@@ -1,6 +1,10 @@
 name: Format Expanded Release
 
 on:
+  push:
+    branches: [codex/production-security]
+    paths:
+      - 'flutter_app/**/*.dart'
   workflow_dispatch:
 
 permissions:
@@ -23,7 +27,7 @@ jobs:
         run: dart format lib test integration_test
       - name: Commit formatter output
         run: |
-          if git diff --quiet; then
+          if git diff --quiet -- flutter_app/lib flutter_app/test flutter_app/integration_test; then
             echo "Source is already formatted."
             exit 0
           fi

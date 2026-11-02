@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 import 'dart:html';
+import 'dart:math';
 
 import 'twilio_messaging_client.dart';
 
@@ -16,10 +17,21 @@ class _WebTwilioMessagingClient implements TwilioMessagingClient {
     required String from,
     required String body,
   }) async {
+    final uri = Uri.parse(endpoint);
+    final target = Uri.base.resolveUri(uri);
+    if (target.origin != Uri.base.origin || target.scheme != 'https') {
+      throw StateError('Messaging requires an HTTPS service on this origin.');
+    }
+    final random = Random.secure();
+    final suffix = List.generate(4, (_) => random.nextInt(1 << 30)).join('_');
+    final requestId = '${DateTime.now().microsecondsSinceEpoch}_$suffix';
     final response = await HttpRequest.request(
       endpoint,
       method: 'POST',
-      requestHeaders: {'Content-Type': 'application/json'},
+      requestHeaders: {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': requestId,
+      },
       sendData: jsonEncode({'to': to, 'from': from, 'body': body}),
     );
     final payload =
