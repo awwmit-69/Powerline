@@ -27,6 +27,7 @@ jobs:
                           assert 'autocomplete="username"' in r.read().decode()
               except urllib.error.HTTPError as error:
                   status=error.code
+                  print(json.dumps({'path':path,'server':error.headers.get('Server'),'ray':error.headers.get('CF-Ray'),'response':error.read(200).decode(errors='replace')}))
               results[path]={'status':status,'expected':expected,'passed':status==expected}
           print(json.dumps(results,sort_keys=True))
           assert all(r['passed'] for r in results.values())
