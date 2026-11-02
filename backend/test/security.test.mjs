@@ -242,3 +242,14 @@ test('large streams are rejected before the complete body is buffered',async()=>
   await assert.rejects(readLimited(req,8192),e=>e.status===413);
   assert.equal(canceled,true);
 });
+test('private frontend assets require an invited active identity',async()=>{
+  const {sql,DB}=database();let reads=0;
+  const config={...env,DB,ASSETS:{fetch(){reads++;return new Response('app');}}};
+  assert.equal((await worker.fetch(new Request(env.PUBLIC_ORIGIN+'/'),config)).status,401);
+  assert.equal(reads,0);
+  assert.equal((await worker.fetch(await api('/'),config)).status,200);
+  assert.equal(reads,1);
+  sql.exec("UPDATE users SET active=0");
+  assert.equal((await worker.fetch(await api('/'),config)).status,403);
+  assert.equal(reads,1);sql.close();
+});

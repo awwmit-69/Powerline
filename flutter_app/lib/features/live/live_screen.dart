@@ -184,9 +184,10 @@ class _LiveScreenState extends State<LiveScreen> {
           'number_id': _number,
           'grant': grant,
         });
-        if (mounted)
+        if (mounted) {
           setState(() => _status =
               '${user['id']} ${grant ? 'assigned to' : 'removed from'} selected line');
+        }
       });
 
   void _control(String action, [Object? value]) {
