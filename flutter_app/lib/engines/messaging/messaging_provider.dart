@@ -200,7 +200,7 @@ class TwilioMessagingProvider implements MessagingProvider {
   final _events = StreamController<MessagingEvent>.broadcast();
 
   TwilioMessagingProvider({
-    this.endpoint = 'https://powerline-voice-2020.twil.io/sms',
+    this.endpoint = const String.fromEnvironment('POWERLINE_SMS_URL'),
     TwilioMessagingClient? client,
   }) : _client = client ?? createTwilioMessagingClient();
 
@@ -208,11 +208,13 @@ class TwilioMessagingProvider implements MessagingProvider {
   String get providerId => 'twilio';
 
   @override
-  EngineStatus get status => const EngineStatus(
+  EngineStatus get status => EngineStatus(
         provider: 'Twilio Messaging',
         mockMode: false,
-        connected: true,
-        missingConfiguration: [],
+        connected: endpoint.isNotEmpty,
+        missingConfiguration: endpoint.isEmpty
+            ? const ['POWERLINE_SMS_URL is not configured']
+            : const [],
         simulatedCapabilities: [],
         unsupportedCapabilities: ['MMS attachments'],
       );
@@ -222,6 +224,9 @@ class TwilioMessagingProvider implements MessagingProvider {
 
   @override
   Future<String> sendSms(OutboundMessageRequest req) async {
+    if (endpoint.isEmpty) {
+      throw StateError('Configure POWERLINE_SMS_URL before enabling live SMS.');
+    }
     try {
       final sid = await _client.send(
         endpoint: endpoint,
