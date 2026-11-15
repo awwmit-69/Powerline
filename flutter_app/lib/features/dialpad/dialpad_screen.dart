@@ -95,7 +95,9 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                               ),
                               label: Text(
                                 mode == 'twilio'
-                                    ? (liveReady ? 'TWILIO CONFIGURED' : 'TWILIO NOT READY')
+                                    ? (liveReady
+                                        ? 'TWILIO CONFIGURED'
+                                        : 'TWILIO NOT READY')
                                     : 'EXTERNAL DIALER',
                               ),
                               visualDensity: VisualDensity.compact,
@@ -250,7 +252,8 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                           minimumSize: const Size(140, 48),
                         ),
                         onPressed:
-                            normalized == null || (mode == 'twilio' && !liveReady)
+                            normalized == null ||
+                                    (mode == 'twilio' && !liveReady)
                                 ? null
                                 : () => _call(normalized),
                         icon: const Icon(Icons.call),
