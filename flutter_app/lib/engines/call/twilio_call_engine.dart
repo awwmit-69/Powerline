@@ -8,7 +8,7 @@ import 'twilio_platform.dart';
 import 'twilio_platform_contract.dart';
 
 class TwilioCallEngine implements CallEngine {
-  static const tokenUrl = 'https://powerline-voice-2020.twil.io/token';
+  static const tokenUrl = String.fromEnvironment('POWERLINE_VOICE_TOKEN_URL');
 
   final TwilioPlatform _platform;
   final _stateController = StreamController<ActiveCallSnapshot>.broadcast();
@@ -26,9 +26,12 @@ class TwilioCallEngine implements CallEngine {
   EngineStatus get status => EngineStatus(
         provider: 'Twilio Voice',
         mockMode: false,
-        connected: kIsWeb && _initialized,
-        missingConfiguration:
-            kIsWeb ? const [] : const ['PowerLine Web is required'],
+        connected: kIsWeb && _initialized && tokenUrl.isNotEmpty,
+        missingConfiguration: !kIsWeb
+            ? const ['PowerLine Web is required']
+            : tokenUrl.isEmpty
+                ? const ['POWERLINE_VOICE_TOKEN_URL is not configured']
+                : const [],
         unsupportedCapabilities: const [
           'hold',
           'transfer',
@@ -46,6 +49,9 @@ class TwilioCallEngine implements CallEngine {
   @override
   Future<void> initialize() async {
     if (_initialized) return;
+    if (tokenUrl.isEmpty) {
+      throw StateError('Configure POWERLINE_VOICE_TOKEN_URL before enabling live calls.');
+    }
     await _platform.initialize(tokenUrl, _onState, (message) {
       _errorController.add(CallEngineError('twilio', message));
     });
