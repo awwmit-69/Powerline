@@ -50,7 +50,9 @@ class TwilioCallEngine implements CallEngine {
   Future<void> initialize() async {
     if (_initialized) return;
     if (tokenUrl.isEmpty) {
-      throw StateError('Configure POWERLINE_VOICE_TOKEN_URL before enabling live calls.');
+      throw StateError(
+        'Configure POWERLINE_VOICE_TOKEN_URL before enabling live calls.',
+      );
     }
     await _platform.initialize(tokenUrl, _onState, (message) {
       _errorController.add(CallEngineError('twilio', message));
