@@ -17,29 +17,29 @@ class TwilioCallEngine implements CallEngine {
   bool _initialized = false;
 
   TwilioCallEngine({TwilioPlatform? platform})
-      : _platform = platform ?? createTwilioPlatform();
+    : _platform = platform ?? createTwilioPlatform();
 
   @override
   String get providerId => 'twilio';
 
   @override
   EngineStatus get status => EngineStatus(
-        provider: 'Twilio Voice',
-        mockMode: false,
-        connected: kIsWeb && _initialized && tokenUrl.isNotEmpty,
-        missingConfiguration: !kIsWeb
-            ? const ['PowerLine Web is required']
-            : tokenUrl.isEmpty
-                ? const ['POWERLINE_VOICE_TOKEN_URL is not configured']
-                : const [],
-        unsupportedCapabilities: const [
-          'hold',
-          'transfer',
-          'conference',
-          'browser recording',
-          'E911',
-        ],
-      );
+    provider: 'Twilio Voice',
+    mockMode: false,
+    connected: kIsWeb && _initialized && tokenUrl.isNotEmpty,
+    missingConfiguration: !kIsWeb
+        ? const ['PowerLine Web is required']
+        : tokenUrl.isEmpty
+        ? const ['POWERLINE_VOICE_TOKEN_URL is not configured']
+        : const [],
+    unsupportedCapabilities: const [
+      'hold',
+      'transfer',
+      'conference',
+      'browser recording',
+      'E911',
+    ],
+  );
 
   @override
   Stream<ActiveCallSnapshot> get callStates => _stateController.stream;
