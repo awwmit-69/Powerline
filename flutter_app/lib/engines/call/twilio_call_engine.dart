@@ -13,6 +13,7 @@ class TwilioCallEngine implements CallEngine {
   final TwilioPlatform _platform;
   final _stateController = StreamController<ActiveCallSnapshot>.broadcast();
   final _errorController = StreamController<CallEngineError>.broadcast();
+  final _incomingController = StreamController<ActiveCallSnapshot>.broadcast();
   final Map<String, ActiveCallSnapshot> _calls = {};
   bool _initialized = false;
 
@@ -46,6 +47,11 @@ class TwilioCallEngine implements CallEngine {
   @override
   Stream<CallEngineError> get errors => _errorController.stream;
 
+  /// Inbound calls ringing this signed-in browser.
+  Stream<ActiveCallSnapshot> get incomingCalls => _incomingController.stream;
+
+  bool get isOnline => _initialized;
+
   @override
   Future<void> initialize() async {
     if (_initialized) return;
@@ -54,9 +60,12 @@ class TwilioCallEngine implements CallEngine {
         'Configure POWERLINE_VOICE_TOKEN_URL before enabling live calls.',
       );
     }
-    await _platform.initialize(tokenUrl, _onState, (message) {
-      _errorController.add(CallEngineError('twilio', message));
-    });
+    await _platform.initialize(
+      tokenUrl,
+      _onState,
+      (message) => _errorController.add(CallEngineError('twilio', message)),
+      _onIncoming,
+    );
     _initialized = true;
   }
 
@@ -74,6 +83,19 @@ class TwilioCallEngine implements CallEngine {
     _calls[callId] = snapshot;
     scheduleMicrotask(() => _stateController.add(snapshot));
     return callId;
+  }
+
+  void _onIncoming(String callId, String from) {
+    final snapshot = ActiveCallSnapshot(
+      callId: callId,
+      remoteE164: from,
+      direction: CallDirection.inbound,
+      state: CallState.ringing,
+      startedAt: DateTime.now(),
+    );
+    _calls[callId] = snapshot;
+    _incomingController.add(snapshot);
+    _stateController.add(snapshot);
   }
 
   void _onState(String state, String callId) {
@@ -128,11 +150,22 @@ class TwilioCallEngine implements CallEngine {
   }
 
   @override
-  Future<void> acceptCall(String callId) async =>
-      throw UnsupportedError('Incoming Twilio calls are not enabled yet.');
+  Future<void> acceptCall(String callId) async {
+    _require(callId);
+    _platform.accept(callId);
+  }
+
   @override
-  Future<void> rejectCall(String callId) async =>
-      throw UnsupportedError('Incoming Twilio calls are not enabled yet.');
+  Future<void> rejectCall(String callId) async {
+    _require(callId);
+    _platform.reject(callId);
+  }
+
+  /// Signs the agent out and stops ringing this browser.
+  void signOut() {
+    _platform.signOut();
+    _initialized = false;
+  }
   @override
   Future<void> hold(String callId) async =>
       throw UnsupportedError('Hold is not enabled for Twilio Web.');
@@ -157,5 +190,6 @@ class TwilioCallEngine implements CallEngine {
     _platform.dispose();
     await _stateController.close();
     await _errorController.close();
+    await _incomingController.close();
   }
 }

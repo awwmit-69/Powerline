@@ -1,34 +1,33 @@
-// Twilio Function: /voice/outbound (set Visibility = Protected).
-// Called by Twilio through the Voice SDK TwiML Application's Voice URL.
-// Start with a tightly controlled allowlist for a first live test.
-// This is NOT an agent authorization mechanism. Production requires
-// authenticated token issuance, agent permissions, and fraud/rate controls.
+// PROTECTED function /voice-outbound — Voice URL of the PowerLine TwiML App.
+// Twilio calls this when a signed-in browser agent places a call.
+// Caller must be client:<agentId> for an agent in AGENTS (identity comes from
+// the server-issued access token). Destination must pass shared dial rules.
+// Caller ID is always CALLER_ID (the account's own Twilio number).
+
 exports.handler = function (context, event, callback) {
+  const { checkDestination, parseAgents, rejectTwiml } = require(Runtime.getFunctions()['dialrules'].path);
   const twiml = new Twilio.twiml.VoiceResponse();
-  const to = String(event.To || "").trim();
-  const from = String(context.POWERLINE_FROM_NUMBER || "").trim();
-  const permitted = String(context.POWERLINE_TEST_DESTINATIONS || "")
-    .split(",")
-    .map((number) => number.trim())
-    .filter(Boolean);
 
-  // E.164 destination only. No arbitrary SIP/Client routing.
-  if (!/^\+[1-9]\d{7,14}$/.test(to) || !permitted.includes(to)) {
-    twiml.say("This destination is not approved for PowerLine testing.");
-    twiml.hangup();
-    return callback(null, twiml);
-  }
-  if (!/^\+[1-9]\d{7,14}$/.test(from)) {
-    twiml.say("PowerLine calling is not configured.");
-    twiml.hangup();
-    return callback(null, twiml);
+  const from = String(event.From || event.Caller || '');
+  const agentId = from.startsWith('client:') ? from.slice(7).toLowerCase() : '';
+  if (!agentId || !parseAgents(context.AGENTS).has(agentId)) {
+    console.log('VOICE_OUT reject=unauthorized_agent');
+    return callback(null, rejectTwiml(twiml, 'This agent is not authorized to place calls.'));
   }
 
+  const result = checkDestination(event.To, context.CALLER_ID);
+  if (!result.ok) {
+    console.log(`VOICE_OUT agent=${agentId} reject=${result.reason}`);
+    return callback(null, rejectTwiml(twiml, result.message));
+  }
+
+  console.log(`VOICE_OUT agent=${agentId} npa=${result.e164.slice(2, 5)}`);
   const dial = twiml.dial({
-    callerId: from,
+    callerId: context.CALLER_ID,
     answerOnBridge: true,
-    timeout: 30,
+    timeout: 45,
+    timeLimit: parseInt(context.MAX_CALL_SECONDS || '3600', 10),
   });
-  dial.number(to);
+  dial.number(result.e164);
   return callback(null, twiml);
 };

@@ -331,6 +331,16 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                       ],
                     ),
                   const Divider(height: 24),
+                  if (mode == 'twilio' && liveReady)
+                    OutlinedButton.icon(
+                      onPressed: _goOnline,
+                      icon: const Icon(Icons.wifi_calling_3_outlined, size: 16),
+                      label: Text(
+                        ref.read(twilioCallEngineProvider).isOnline
+                            ? 'Online — receiving calls'
+                            : 'Sign in & receive calls',
+                      ),
+                    ),
                   if (mode == 'demo')
                     OutlinedButton.icon(
                       onPressed: () => ref
@@ -361,6 +371,26 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _goOnline() async {
+    try {
+      await ref.read(callSessionProvider.notifier).goOnline();
+      if (mounted) {
+        setState(() {});
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Signed in. This browser will ring for calls.'),
+          ),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Sign-in failed: $error')));
+      }
+    }
   }
 
   Future<void> _call(String e164) async {

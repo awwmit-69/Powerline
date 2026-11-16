@@ -44,3 +44,31 @@ not make live calling or texting functional.
 
 **Important:** The repository intentionally does not contain account-specific
 identifiers, secrets, phone numbers, voice recordings, or private voice IDs.
+
+## Deployed backend (Twilio Functions, one service)
+
+| Path | Visibility | Purpose |
+| --- | --- | --- |
+| `/dialrules` | Private | Shared US/Canada dial rules (from `dialrules.private.js`) |
+| `/session` | Private | Session signing + CORS helpers (from `session.private.js`) |
+| `/auth-start` | Public | Texts a Twilio Verify code to the agent's phone on file |
+| `/auth-verify` | Public | Checks the code, returns a signed 12h session |
+| `/voice-token` | Public | Session -> 1h Voice access token (identity = agent id) |
+| `/voice-outbound` | Protected | TwiML App Voice URL; agent + dial-rule checks; caller ID = `CALLER_ID` |
+| `/sip-outbound` | Protected | SIP Domain handler for Zoiper/Bria |
+| `/sip-inbound` | Protected | Number voice URL; rings softphones + signed-in browsers, then voicemail |
+
+Additional environment variables (set in the Functions console, never in Git):
+
+| Variable | Example / rule |
+| --- | --- |
+| `AGENTS` | `agentid:+1XXXXXXXXXX` comma-separated (phone receives sign-in codes) |
+| `VERIFY_SERVICE_SID` | Twilio Verify service (`VA...`) |
+| `SESSION_SECRET` | 48+ random chars; rotate to sign everyone out |
+| `ALLOWED_ORIGINS` | `https://awwmit-69.github.io` (comma-separated) |
+| `TWILIO_ACCOUNT_SID`, `TWILIO_API_KEY_SID`, `TWILIO_API_KEY_SECRET`, `TWIML_APP_SID` | as above |
+| `CALLER_ID`, `SIP_DOMAIN`, `SIP_USERS`, `MAX_CALL_SECONDS`, `RING_SECONDS`, `VM_MAX_SECONDS` | calling config |
+
+Build the web app with
+`--dart-define=POWERLINE_VOICE_TOKEN_URL=https://<service>.twil.io/voice-token`.
+Tests: `cd twilio-functions && npm install && npm test`.
