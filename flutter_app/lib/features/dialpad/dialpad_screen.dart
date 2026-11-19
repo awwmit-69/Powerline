@@ -30,8 +30,9 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
 
   void _append(String d) => setState(() => digits += d);
   void _backspace() => setState(
-    () => digits = digits.isEmpty ? '' : digits.substring(0, digits.length - 1),
-  );
+        () => digits =
+            digits.isEmpty ? '' : digits.substring(0, digits.length - 1),
+      );
 
   Future<void> _paste() async {
     final data = await Clipboard.getData(Clipboard.kTextPlain);
@@ -48,23 +49,19 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
     final normalized = PhoneNumberUtil.normalize(digits);
     final matches = digits.length >= 3
         ? s.contacts
-              .where(
-                (c) =>
-                    c.phones.any(
-                      (p) =>
-                          p.e164.contains(digits.replaceAll(RegExp(r'\D'), '')),
-                    ) ||
-                    c.displayName.toLowerCase().contains(digits.toLowerCase()),
-              )
-              .take(4)
-              .toList()
+            .where(
+              (c) =>
+                  c.phones.any(
+                    (p) =>
+                        p.e164.contains(digits.replaceAll(RegExp(r'\D'), '')),
+                  ) ||
+                  c.displayName.toLowerCase().contains(digits.toLowerCase()),
+            )
+            .take(4)
+            .toList()
         : <Contact>[];
-    final recents = s.calls
-        .take(5)
-        .map((c) => c.remoteE164)
-        .toSet()
-        .take(4)
-        .toList();
+    final recents =
+        s.calls.take(5).map((c) => c.remoteE164).toSet().take(4).toList();
     callerIdNumberId ??=
         s.settings['defaultCallerId'] ?? s.numbers.firstOrNull?.id;
 
@@ -100,8 +97,8 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                               label: Text(
                                 mode == 'twilio'
                                     ? (liveReady
-                                          ? 'TWILIO CONFIGURED'
-                                          : 'TWILIO NOT READY')
+                                        ? 'TWILIO CONFIGURED'
+                                        : 'TWILIO NOT READY')
                                     : 'EXTERNAL DIALER',
                               ),
                               visualDensity: VisualDensity.compact,
@@ -255,8 +252,7 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                           backgroundColor: PowerlineColors.stateConnected,
                           minimumSize: const Size(140, 48),
                         ),
-                        onPressed:
-                            normalized == null ||
+                        onPressed: normalized == null ||
                                 (mode == 'twilio' && !liveReady)
                             ? null
                             : () => _call(normalized),
@@ -265,8 +261,8 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                           mode == 'twilio'
                               ? 'Call live'
                               : mode == 'demo'
-                              ? 'Demo call'
-                              : 'OS dialer',
+                                  ? 'Demo call'
+                                  : 'OS dialer',
                         ),
                       ),
                       OutlinedButton.icon(
@@ -353,11 +349,11 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                   Text(
                     mode == 'twilio'
                         ? (liveReady
-                              ? 'Twilio endpoint configured. Live calling requires an active provider and a successful audio test. Emergency calls are NOT supported.'
-                              : 'Twilio is not configured. Supply a secure token endpoint before placing calls. Emergency calls are NOT supported.')
+                            ? 'Twilio endpoint configured. Live calling requires an active provider and a successful audio test. Emergency calls are NOT supported.'
+                            : 'Twilio is not configured. Supply a secure token endpoint before placing calls. Emergency calls are NOT supported.')
                         : mode == 'demo'
-                        ? 'Demo mode: calls are simulated locally. No real person is contacted. Emergency calls are NOT supported.'
-                        : 'Opens your device telephone app. PowerLine does not place this call.',
+                            ? 'Demo mode: calls are simulated locally. No real person is contacted. Emergency calls are NOT supported.'
+                            : 'Opens your device telephone app. PowerLine does not place this call.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 11,
