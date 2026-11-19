@@ -82,12 +82,15 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                         'Dialpad',
                         style: TextStyle(fontWeight: FontWeight.w700),
                       ),
-                      Row(
+                      Flexible(
+                        child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           if (mode == 'demo')
                             const DemoBadge()
                           else
-                            Chip(
+                            Flexible(
+                              child: Chip(
                               avatar: Icon(
                                 mode == 'twilio' && liveReady
                                     ? Icons.cloud_outlined
@@ -100,8 +103,10 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                                         ? 'TWILIO CONFIGURED'
                                         : 'TWILIO NOT READY')
                                     : 'EXTERNAL DIALER',
+                                overflow: TextOverflow.ellipsis,
                               ),
                               visualDensity: VisualDensity.compact,
+                            ),
                             ),
                           const SizedBox(width: 8),
                           Tooltip(
@@ -113,6 +118,7 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                             ),
                           ),
                         ],
+                      ),
                       ),
                     ],
                   ),
