@@ -57,7 +57,13 @@ jobs:
         run: flutter pub get
       - name: Build
         working-directory: flutter_app
-        run: flutter build web --release --base-href /Powerline/
+        # Non-secret endpoint of the authenticated voice backend (Twilio Functions).
+        # Override with the repository variable POWERLINE_VOICE_TOKEN_URL.
+        env:
+          POWERLINE_VOICE_TOKEN_URL: ${{ vars.POWERLINE_VOICE_TOKEN_URL || 'https://powerline-sip-8162.twil.io/voice-token' }}
+        run: >
+          flutter build web --release --base-href /Powerline/
+          --dart-define=POWERLINE_VOICE_TOKEN_URL="$POWERLINE_VOICE_TOKEN_URL"
       - uses: actions/upload-artifact@v4
         with:
           name: Powerline_Web_Build
