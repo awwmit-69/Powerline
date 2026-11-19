@@ -124,10 +124,37 @@ class CallSessionController extends Notifier<CallSession?> {
   StreamSubscription<ActiveCallSnapshot>? _sub;
   CallEngine? _activeEngine;
 
+  StreamSubscription<ActiveCallSnapshot>? _incomingSub;
+
   @override
   CallSession? build() {
-    ref.onDispose(() => _sub?.cancel());
+    final twilio = ref.read(twilioCallEngineProvider);
+    _incomingSub = twilio.incomingCalls.listen(_onLiveIncoming);
+    ref.onDispose(() {
+      _sub?.cancel();
+      _incomingSub?.cancel();
+    });
     return null;
+  }
+
+  /// Signs this browser in and registers it to ring for live inbound calls.
+  Future<void> goOnline() => ref.read(twilioCallEngineProvider).initialize();
+
+  void _onLiveIncoming(ActiveCallSnapshot snap) {
+    final twilio = ref.read(twilioCallEngineProvider);
+    if (state != null && !state!.snapshot.state.isTerminal) {
+      // Already on a call: decline so the caller rolls to other devices/voicemail.
+      twilio.rejectCall(snap.callId);
+      return;
+    }
+    _activeEngine = twilio;
+    _attach(
+      snap.callId,
+      snap.remoteE164,
+      CallDirection.inbound,
+      providerId: 'twilio',
+    );
+    _repo.notify('call', 'Incoming call', 'From ${snap.remoteE164}');
   }
 
   CallEngine get _engine => _activeEngine ?? ref.read(demoCallEngineProvider);

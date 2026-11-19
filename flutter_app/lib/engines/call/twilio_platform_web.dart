@@ -33,6 +33,7 @@ class _WebTwilioPlatform implements TwilioPlatform {
     String tokenUrl,
     TwilioStateCallback onState,
     TwilioErrorCallback onError,
+    TwilioIncomingCallback onIncoming,
   ) async {
     await _promise('powerlineTwilioInitialize', [
       tokenUrl,
@@ -42,6 +43,10 @@ class _WebTwilioPlatform implements TwilioPlatform {
       ),
       js.JsFunction.withThis(
         (Object? _, Object? message) => onError(message.toString()),
+      ),
+      js.JsFunction.withThis(
+        (Object? _, Object? callId, Object? from) =>
+            onIncoming(callId.toString(), from.toString()),
       ),
     ]);
   }
@@ -53,6 +58,12 @@ class _WebTwilioPlatform implements TwilioPlatform {
   }
 
   @override
+  void accept(String callId) =>
+      js.context.callMethod('powerlineTwilioAccept', [callId]);
+  @override
+  void reject(String callId) =>
+      js.context.callMethod('powerlineTwilioReject', [callId]);
+  @override
   void hangup() => js.context.callMethod('powerlineTwilioHangup');
   @override
   void mute(bool muted) =>
@@ -60,6 +71,8 @@ class _WebTwilioPlatform implements TwilioPlatform {
   @override
   void sendDigits(String digits) =>
       js.context.callMethod('powerlineTwilioSendDigits', [digits]);
+  @override
+  void signOut() => js.context.callMethod('powerlineTwilioSignOut');
   @override
   void dispose() => js.context.callMethod('powerlineTwilioDispose');
 }

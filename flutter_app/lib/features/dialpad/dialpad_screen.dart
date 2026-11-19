@@ -13,6 +13,7 @@ import '../../core/util/phone.dart';
 import '../../data/repositories/app_repository.dart';
 import '../../domain/models/models.dart';
 import '../../providers.dart';
+
 import 'package:collection/collection.dart';
 
 class DialpadScreen extends ConsumerStatefulWidget {
@@ -43,6 +44,8 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
   @override
   Widget build(BuildContext context) {
     final s = stateOf(ref);
+    final liveVoice = ref.watch(twilioCallEngineProvider).status;
+    final liveReady = liveVoice.missingConfiguration.isEmpty;
     final normalized = PhoneNumberUtil.normalize(digits);
     final matches = digits.length >= 3
         ? s.contacts
@@ -79,26 +82,43 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                         'Dialpad',
                         style: TextStyle(fontWeight: FontWeight.w700),
                       ),
-                      Row(
-                        children: [
-                          if (mode == 'demo')
-                            const DemoBadge()
-                          else
-                            const Chip(
-                              avatar: Icon(Icons.cloud_done, size: 14),
-                              label: Text('TWILIO LIVE'),
-                              visualDensity: VisualDensity.compact,
+                      Flexible(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (mode == 'demo')
+                              const DemoBadge()
+                            else
+                              Flexible(
+                                child: Chip(
+                                  avatar: Icon(
+                                    mode == 'twilio' && liveReady
+                                        ? Icons.cloud_outlined
+                                        : Icons.info_outline,
+                                    size: 14,
+                                  ),
+                                  label: Text(
+                                    mode == 'twilio'
+                                        ? (liveReady
+                                            ? 'TWILIO CONFIGURED'
+                                            : 'TWILIO NOT READY')
+                                        : 'EXTERNAL DIALER',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                              ),
+                            const SizedBox(width: 8),
+                            Tooltip(
+                              message: 'Demo provider: local simulation only',
+                              child: Icon(
+                                Icons.circle,
+                                size: 10,
+                                color: PowerlineColors.stateRinging,
+                              ),
                             ),
-                          const SizedBox(width: 8),
-                          Tooltip(
-                            message: 'Demo provider: local simulation only',
-                            child: Icon(
-                              Icons.circle,
-                              size: 10,
-                              color: PowerlineColors.stateRinging,
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -238,8 +258,10 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                           backgroundColor: PowerlineColors.stateConnected,
                           minimumSize: const Size(140, 48),
                         ),
-                        onPressed:
-                            normalized == null ? null : () => _call(normalized),
+                        onPressed: normalized == null ||
+                                (mode == 'twilio' && !liveReady)
+                            ? null
+                            : () => _call(normalized),
                         icon: const Icon(Icons.call),
                         label: Text(
                           mode == 'twilio'
@@ -311,6 +333,16 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                       ],
                     ),
                   const Divider(height: 24),
+                  if (mode == 'twilio' && liveReady)
+                    OutlinedButton.icon(
+                      onPressed: _goOnline,
+                      icon: const Icon(Icons.wifi_calling_3_outlined, size: 16),
+                      label: Text(
+                        ref.read(twilioCallEngineProvider).isOnline
+                            ? 'Online — receiving calls'
+                            : 'Sign in & receive calls',
+                      ),
+                    ),
                   if (mode == 'demo')
                     OutlinedButton.icon(
                       onPressed: () => ref
@@ -322,10 +354,12 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                   const SizedBox(height: 6),
                   Text(
                     mode == 'twilio'
-                        ? 'Live trial calling via +1 605-205-8454. Calls are currently '
-                            'restricted to the verified test destination. Emergency calls are NOT possible.'
-                        : 'Demo mode: calls are simulated locally. No real person is contacted. '
-                            'Emergency calls are NOT possible.',
+                        ? (liveReady
+                            ? 'Twilio endpoint configured. Live calling requires an active provider and a successful audio test. Emergency calls are NOT supported.'
+                            : 'Twilio is not configured. Supply a secure token endpoint before placing calls. Emergency calls are NOT supported.')
+                        : mode == 'demo'
+                            ? 'Demo mode: calls are simulated locally. No real person is contacted. Emergency calls are NOT supported.'
+                            : 'Opens your device telephone app. PowerLine does not place this call.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 11,
@@ -339,6 +373,26 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _goOnline() async {
+    try {
+      await ref.read(callSessionProvider.notifier).goOnline();
+      if (mounted) {
+        setState(() {});
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Signed in. This browser will ring for calls.'),
+          ),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Sign-in failed: $error')));
+      }
+    }
   }
 
   Future<void> _call(String e164) async {
