@@ -84,41 +84,41 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                       ),
                       Flexible(
                         child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (mode == 'demo')
-                            const DemoBadge()
-                          else
-                            Flexible(
-                              child: Chip(
-                              avatar: Icon(
-                                mode == 'twilio' && liveReady
-                                    ? Icons.cloud_outlined
-                                    : Icons.info_outline,
-                                size: 14,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (mode == 'demo')
+                              const DemoBadge()
+                            else
+                              Flexible(
+                                child: Chip(
+                                  avatar: Icon(
+                                    mode == 'twilio' && liveReady
+                                        ? Icons.cloud_outlined
+                                        : Icons.info_outline,
+                                    size: 14,
+                                  ),
+                                  label: Text(
+                                    mode == 'twilio'
+                                        ? (liveReady
+                                            ? 'TWILIO CONFIGURED'
+                                            : 'TWILIO NOT READY')
+                                        : 'EXTERNAL DIALER',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  visualDensity: VisualDensity.compact,
+                                ),
                               ),
-                              label: Text(
-                                mode == 'twilio'
-                                    ? (liveReady
-                                        ? 'TWILIO CONFIGURED'
-                                        : 'TWILIO NOT READY')
-                                    : 'EXTERNAL DIALER',
-                                overflow: TextOverflow.ellipsis,
+                            const SizedBox(width: 8),
+                            Tooltip(
+                              message: 'Demo provider: local simulation only',
+                              child: Icon(
+                                Icons.circle,
+                                size: 10,
+                                color: PowerlineColors.stateRinging,
                               ),
-                              visualDensity: VisualDensity.compact,
                             ),
-                            ),
-                          const SizedBox(width: 8),
-                          Tooltip(
-                            message: 'Demo provider: local simulation only',
-                            child: Icon(
-                              Icons.circle,
-                              size: 10,
-                              color: PowerlineColors.stateRinging,
-                            ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
