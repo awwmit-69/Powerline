@@ -34,7 +34,9 @@ jobs:
         run: dart format --output=none --set-exit-if-changed lib test integration_test
       - name: Analyze
         working-directory: flutter_app
-        run: flutter analyze
+        # Deprecation infos (e.g. material.dart -> material_ui) stay visible but non-fatal;
+        # errors and warnings still fail the build.
+        run: flutter analyze --no-fatal-infos
       - name: Test
         working-directory: flutter_app
         run: flutter test
