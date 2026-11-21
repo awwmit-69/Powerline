@@ -45,3 +45,17 @@ published deliberately rather than overwritten by every commit.
 Manrope and JetBrains Mono are committed in `flutter_app/assets/fonts` for
 reproducible builds. Their Open Font License texts are in
 `flutter_app/assets/licenses`.
+
+## Live provider readiness (not a production launch)
+
+The preview remains in demo mode unless a supported live integration is explicitly selected and configured. The Flutter web build accepts these non-secret compile-time settings:
+
+```bash
+flutter build web --release --base-href /Powerline/ \
+  --dart-define=POWERLINE_VOICE_TOKEN_URL=https://YOUR-API.example.com/voice/token \
+  --dart-define=POWERLINE_SMS_URL=https://YOUR-API.example.com/sms
+```
+
+These addresses must point to **your authenticated, server-side endpoints**. Never embed Twilio auth tokens, API secrets, or provider credentials in Dart defines or browser code. The token endpoint must authenticate the signed-in agent, issue short-lived scoped voice tokens, and apply rate limits. The SMS endpoint must enforce login, permission checks, recipient opt-in, suppression/DNC checks, send limits, abuse controls, and server-side provider authentication. Configure the proper callback URLs and CORS policy on that backend. A public browser-callable unauthenticated SMS relay is unsafe and must never be deployed.
+
+In the absence of these settings, the live voice and SMS integrations report missing configuration instead of presenting themselves as ready. A passing Flutter build is **not** a live call test. Validate provider activation, microphone permission, two-way audio, inbound routing, delivery receipts, STOP handling, and device reconnection before production use. The Twilio integration is web-only, and Android/iOS native calling still requires separate implementation and testing.

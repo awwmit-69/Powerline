@@ -14,16 +14,19 @@ class _NativeTwilioPlatform implements TwilioPlatform {
   String? _tokenUrl;
   TwilioStateCallback? _onState;
   TwilioErrorCallback? _onError;
+  TwilioIncomingCallback? _onIncoming;
 
   @override
   Future<void> initialize(
     String tokenUrl,
     TwilioStateCallback onState,
     TwilioErrorCallback onError,
+    TwilioIncomingCallback onIncoming,
   ) async {
     _tokenUrl = tokenUrl;
     _onState = onState;
     _onError = onError;
+    _onIncoming = onIncoming;
     _channel.setMethodCallHandler((call) async {
       final arguments = Map<String, Object?>.from(
         call.arguments as Map? ?? const {},
@@ -33,6 +36,12 @@ class _NativeTwilioPlatform implements TwilioPlatform {
           _onState?.call(
             arguments['state']?.toString() ?? 'failed',
             arguments['callId']?.toString() ?? '',
+          );
+          return;
+        case 'incoming':
+          _onIncoming?.call(
+            arguments['callId']?.toString() ?? '',
+            arguments['from']?.toString() ?? '',
           );
           return;
         case 'error':
@@ -84,6 +93,16 @@ class _NativeTwilioPlatform implements TwilioPlatform {
   }
 
   @override
+  void accept(String callId) => unawaited(
+        _channel.invokeMethod<void>('accept', {'callId': callId}),
+      );
+
+  @override
+  void reject(String callId) => unawaited(
+        _channel.invokeMethod<void>('reject', {'callId': callId}),
+      );
+
+  @override
   void hangup() => unawaited(_channel.invokeMethod<void>('hangup'));
 
   @override
@@ -95,6 +114,9 @@ class _NativeTwilioPlatform implements TwilioPlatform {
   void sendDigits(String digits) => unawaited(
         _channel.invokeMethod<void>('sendDigits', {'digits': digits}),
       );
+
+  @override
+  void signOut() {}
 
   @override
   void dispose() {

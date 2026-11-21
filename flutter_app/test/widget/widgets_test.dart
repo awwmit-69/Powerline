@@ -43,7 +43,8 @@ void main() {
     await tester.pumpWidget(_wrap(c, const DialpadScreen()));
     await tester.pumpAndSettle();
     expect(find.text('Dialpad'), findsOneWidget);
-    expect(find.text('TWILIO LIVE'), findsWidgets);
+    // No POWERLINE_VOICE_TOKEN_URL in tests, so the badge must say not ready.
+    expect(find.text('TWILIO NOT READY'), findsWidgets);
     await tester.tap(find.widgetWithText(OutlinedButton, '2'));
     await tester.tap(find.widgetWithText(OutlinedButton, '1'));
     await tester.tap(find.widgetWithText(OutlinedButton, '4'));
