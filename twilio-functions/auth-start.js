@@ -19,6 +19,12 @@ exports.handler = async function (context, event, callback) {
   const agents = parseAgents(context.AGENTS);
   const phone = agents.get(agentId);
 
+  // Primary sign-in: PowerLine PIN (no SMS needed). The app then asks for the PIN.
+  if (phone && parsePins(context.AGENT_PINS, context.AGENTS).has(agentId)) {
+    console.log(`AUTH_START agent=${agentId} method=pin`);
+    return callback(null, jsonResponse(context, event, 200, { sent: false, fallback: 'pin' }));
+  }
+
   if (phone) {
     try {
       const client = require('twilio')(context.TWILIO_API_KEY_SID, context.TWILIO_API_KEY_SECRET, {
@@ -31,11 +37,13 @@ exports.handler = async function (context, event, callback) {
     } catch (err) {
       // Log status only; never log phone numbers or codes.
       console.log(`AUTH_START agent=${agentId} error=${err && err.status} code=${err && err.code}`);
-      // If the agent has a PowerLine PIN on file, let them sign in with it instead.
-      if (parsePins(context.AGENT_PINS).has(agentId)) {
-        return callback(null, jsonResponse(context, event, 200, { sent: false, fallback: 'pin', code: (err && err.code) || null }));
-      }
-      return callback(null, jsonResponse(context, event, 429, { error: 'unable_to_send_code', code: (err && err.code) || null, status: (err && err.status) || null }));
+      return callback(null, jsonResponse(context, event, 429, {
+        error: 'unable_to_send_code',
+        code: (err && err.code) || null,
+        status: (err && err.status) || null,
+        // Non-secret hint: AGENT_PINS is set but has no valid PIN for this agent.
+        pinFormatInvalid: Boolean(context.AGENT_PINS) || undefined,
+      }));
     }
   } else {
     console.log('AUTH_START unknown_agent');

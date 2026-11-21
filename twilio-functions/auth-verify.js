@@ -23,7 +23,7 @@ exports.handler = async function (context, event, callback) {
   }
 
   // Backup sign-in: PowerLine PIN from AGENT_PINS (used when SMS codes can't be sent).
-  const pin = parsePins(context.AGENT_PINS).get(agentId);
+  const pin = parsePins(context.AGENT_PINS, context.AGENTS).get(agentId);
   const pinOk =
     pin &&
     pin.length === code.length &&

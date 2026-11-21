@@ -104,10 +104,17 @@ test('PIN backup sign-in', async () => {
   assert.equal(r.status, 401);
   r = await run('auth-verify.js', { ...req('https://evil.example'), agent: 'shahedul', code: 'Ab3dE6gH9k' }, c);
   assert.equal(r.status, 403);
-  // SMS send fails here (no network) -> agents with a PIN get the PIN fallback, others get 429.
+  // Agents with a PIN skip SMS entirely; without one, SMS failure (no network here) -> 429.
   r = await run('auth-start.js', { ...req(), agent: 'shahedul' }, c);
   assert.equal(r.status, 200); assert.equal(r.body.fallback, 'pin');
   r = await run('auth-start.js', { ...req(), agent: 'shahedul' });
   assert.equal(r.status, 429);
-  assert.equal(rules.parsePins('a:short,bb:Ab3dE6gH9k,cc:bad pin!').size, 1);
+  r = await run('auth-start.js', { ...req(), agent: 'shahedul' }, { ...ctx, AGENT_PINS: 'shahedul:has space!' });
+  assert.equal(r.status, 429); assert.equal(r.body.pinFormatInvalid, true);
+  assert.equal(rules.parsePins('a:x,bb:Ab3dE6gH9k,cc:bad pin!').size, 1);
+  // Bare PIN, quotes and spaces tolerated; maps to the only agent.
+  assert.equal(rules.parsePins(' "Dhaka2026" ', 'shahedul:+16893036969').get('shahedul'), 'Dhaka2026');
+  assert.equal(rules.parsePins('Shahedul : 1234', 'shahedul:+16893036969').get('shahedul'), '1234');
+  r = await run('auth-verify.js', { ...req(), agent: 'shahedul', code: 'Dhaka2026' }, { ...ctx, AGENT_PINS: 'Dhaka2026' });
+  assert.equal(r.status, 200);
 });
