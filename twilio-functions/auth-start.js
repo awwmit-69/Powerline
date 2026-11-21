@@ -8,7 +8,7 @@
 //      TWILIO_API_KEY_SECRET, ALLOWED_ORIGINS
 
 exports.handler = async function (context, event, callback) {
-  const { parseAgents } = require(Runtime.getFunctions()['dialrules'].path);
+  const { parseAgents, parsePins } = require(Runtime.getFunctions()['dialrules'].path);
   const { jsonResponse, originAllowed } = require(Runtime.getFunctions()['session'].path);
 
   if (!originAllowed(context, event)) {
@@ -30,7 +30,11 @@ exports.handler = async function (context, event, callback) {
       console.log(`AUTH_START agent=${agentId} sent=1`);
     } catch (err) {
       // Log status only; never log phone numbers or codes.
-      console.log(`AUTH_START agent=${agentId} error=${err && err.status}`);
+      console.log(`AUTH_START agent=${agentId} error=${err && err.status} code=${err && err.code}`);
+      // If the agent has a PowerLine PIN on file, let them sign in with it instead.
+      if (parsePins(context.AGENT_PINS).has(agentId)) {
+        return callback(null, jsonResponse(context, event, 200, { sent: false, fallback: 'pin', code: (err && err.code) || null }));
+      }
       return callback(null, jsonResponse(context, event, 429, { error: 'unable_to_send_code', code: (err && err.code) || null, status: (err && err.status) || null }));
     }
   } else {

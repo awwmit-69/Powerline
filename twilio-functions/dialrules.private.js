@@ -78,10 +78,27 @@ function parseAgents(value) {
   return map;
 }
 
+// AGENT_PINS env format: "agentId:PIN,agent2:PIN" (PIN: 8-10 letters/digits).
+function parsePins(value) {
+  const map = new Map();
+  String(value || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .forEach((pair) => {
+      const idx = pair.indexOf(':');
+      if (idx <= 0) return;
+      const id = pair.slice(0, idx).trim().toLowerCase();
+      const pin = pair.slice(idx + 1).trim();
+      if (/^[a-z0-9_.-]{2,32}$/.test(id) && /^[A-Za-z0-9]{8,10}$/.test(pin)) map.set(id, pin);
+    });
+  return map;
+}
+
 function rejectTwiml(twiml, message) {
   twiml.say({ voice: 'Polly.Joanna' }, message);
   twiml.hangup();
   return twiml;
 }
 
-module.exports = { checkDestination, normalizeNanp, parseAgents, rejectTwiml, BLOCKED_NPA };
+module.exports = { checkDestination, normalizeNanp, parseAgents, parsePins, rejectTwiml, BLOCKED_NPA };

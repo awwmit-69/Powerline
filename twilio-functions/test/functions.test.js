@@ -94,3 +94,20 @@ test('sip-inbound rings softphones + browser agents, then voicemail', async () =
   assert.match(await xml('sip-inbound.js', { CallSid: 'CA1', DialCallStatus: 'completed' }), /^<\?xml[^>]*><Response><Hangup\/><\/Response>$/);
   assert.match(await xml('sip-inbound.js', { step: 'vm-done' }), /recorded/);
 });
+
+test('PIN backup sign-in', async () => {
+  const c = { ...ctx, AGENT_PINS: 'shahedul:Ab3dE6gH9k' };
+  let r = await run('auth-verify.js', { ...req(), agent: 'shahedul', code: 'Ab3dE6gH9k' }, c);
+  assert.equal(r.status, 200); assert.ok(r.body.session);
+  assert.equal(session.verify(r.body.session, ctx.SESSION_SECRET).sub, 'shahedul');
+  r = await run('auth-verify.js', { ...req(), agent: 'shahedul', code: 'Ab3dE6gH9X' }, c);
+  assert.equal(r.status, 401);
+  r = await run('auth-verify.js', { ...req('https://evil.example'), agent: 'shahedul', code: 'Ab3dE6gH9k' }, c);
+  assert.equal(r.status, 403);
+  // SMS send fails here (no network) -> agents with a PIN get the PIN fallback, others get 429.
+  r = await run('auth-start.js', { ...req(), agent: 'shahedul' }, c);
+  assert.equal(r.status, 200); assert.equal(r.body.fallback, 'pin');
+  r = await run('auth-start.js', { ...req(), agent: 'shahedul' });
+  assert.equal(r.status, 429);
+  assert.equal(rules.parsePins('a:short,bb:Ab3dE6gH9k,cc:bad pin!').size, 1);
+});
