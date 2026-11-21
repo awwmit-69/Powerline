@@ -228,25 +228,26 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                           ),
                         )
                       else
-                      DropdownButtonFormField<String>(
-                        isExpanded: true,
-                        initialValue: callerIdNumberId,
-                        decoration: const InputDecoration(
-                          labelText: 'Caller ID (outbound number)',
-                          isDense: true,
-                        ),
-                        items: [
-                          for (final n in s.numbers)
-                            DropdownMenuItem(
-                              value: n.id,
-                              child: Text(
-                                '${n.label} ${PhoneNumberUtil.format(n.e164)}',
-                                overflow: TextOverflow.ellipsis,
+                        DropdownButtonFormField<String>(
+                          isExpanded: true,
+                          initialValue: callerIdNumberId,
+                          decoration: const InputDecoration(
+                            labelText: 'Caller ID (outbound number)',
+                            isDense: true,
+                          ),
+                          items: [
+                            for (final n in s.numbers)
+                              DropdownMenuItem(
+                                value: n.id,
+                                child: Text(
+                                  '${n.label} ${PhoneNumberUtil.format(n.e164)}',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                            ),
-                        ],
-                        onChanged: (v) => setState(() => callerIdNumberId = v),
-                      ),
+                          ],
+                          onChanged: (v) =>
+                              setState(() => callerIdNumberId = v),
+                        ),
                       const SizedBox(height: 8),
                       SegmentedButton<String>(
                         segments: const [
