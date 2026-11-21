@@ -31,7 +31,7 @@ exports.handler = async function (context, event, callback) {
     } catch (err) {
       // Log status only; never log phone numbers or codes.
       console.log(`AUTH_START agent=${agentId} error=${err && err.status}`);
-      return callback(null, jsonResponse(context, event, 429, { error: 'unable_to_send_code' }));
+      return callback(null, jsonResponse(context, event, 429, { error: 'unable_to_send_code', code: (err && err.code) || null, status: (err && err.status) || null }));
     }
   } else {
     console.log('AUTH_START unknown_agent');
