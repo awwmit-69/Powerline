@@ -52,6 +52,10 @@ class _WebTwilioPlatform implements TwilioPlatform {
   }
 
   @override
+  bool hasSavedSession() =>
+      js.context.callMethod('powerlineTwilioHasSession') == true;
+
+  @override
   Future<String> placeCall(String destination) async {
     final callId = await _promise('powerlineTwilioPlaceCall', [destination]);
     return callId.toString();

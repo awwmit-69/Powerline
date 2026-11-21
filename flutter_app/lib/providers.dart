@@ -130,6 +130,7 @@ class CallSessionController extends Notifier<CallSession?> {
   CallSession? build() {
     final twilio = ref.read(twilioCallEngineProvider);
     _incomingSub = twilio.incomingCalls.listen(_onLiveIncoming);
+    Future.microtask(twilio.resumeIfSignedIn);
     ref.onDispose(() {
       _sub?.cancel();
       _incomingSub?.cancel();

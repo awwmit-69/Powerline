@@ -1,10 +1,11 @@
 // Self-hosted PowerLine voice bridge (neutral filename avoids browser blocking).
 //
 // Security model:
-// - The agent signs in with a one-time code sent by Twilio Verify to the phone
-//   on file for that agent (server: /auth-start, /auth-verify).
-// - The resulting session is kept in sessionStorage (cleared when the tab
-//   closes) and exchanged for short-lived Twilio voice tokens (/voice-token).
+// - The agent signs in once with Agent ID + PIN (server: /auth-verify; PINs live
+//   only in the server's AGENT_PINS setting).
+// - The signed session is kept in this browser until it expires (server
+//   SESSION_TTL_SECONDS) and is exchanged for 1-hour Twilio voice tokens
+//   (/voice-token). Sign out clears it.
 // - No Twilio secrets ever reach the browser.
 //
 // POWERLINE_VOICE_TOKEN_URL must be https://<service>.twil.io/voice-token;
@@ -31,9 +32,19 @@
   };
 
   // ---------- session ----------
+  const store = (() => {
+    try {
+      localStorage.setItem("powerline.probe", "1");
+      localStorage.removeItem("powerline.probe");
+      return localStorage;
+    } catch (_) {
+      return sessionStorage;
+    }
+  })();
+
   function loadSession() {
     try {
-      const raw = sessionStorage.getItem(SESSION_KEY);
+      const raw = store.getItem(SESSION_KEY);
       if (!raw) return null;
       const s = JSON.parse(raw);
       if (!s.session || !s.expiresAt || s.expiresAt * 1000 < Date.now() + 60000) return null;
@@ -45,7 +56,7 @@
 
   function saveSession(s) {
     try {
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(s));
+      store.setItem(SESSION_KEY, JSON.stringify(s));
     } catch (_) {
       // Storage unavailable: session lives only in memory for this page.
     }
@@ -55,7 +66,7 @@
   function clearSession() {
     memorySession = null;
     try {
-      sessionStorage.removeItem(SESSION_KEY);
+      store.removeItem(SESSION_KEY);
     } catch (_) {}
   }
 
@@ -73,7 +84,7 @@
     return { ok: res.ok, status: res.status, payload };
   }
 
-  // ---------- sign-in dialog ----------
+  // ---------- sign-in dialog (Agent ID + PIN, one step) ----------
   function signInDialog() {
     return new Promise((resolve, reject) => {
       const css = {
@@ -86,23 +97,24 @@
       const overlay = document.createElement("div");
       overlay.setAttribute("style", css.overlay);
       overlay.innerHTML = `
-        <form style="${css.card}" autocomplete="off">
-          <div style="font-weight:800;font-size:18px;margin-bottom:4px">PowerLine agent sign-in</div>
-          <div data-k="hint" style="color:#AEB9C7;font-size:13px;margin-bottom:14px">Enter your agent ID. We'll text a one-time code to the phone on file.</div>
+        <form style="${css.card}" autocomplete="on">
+          <div style="font-weight:800;font-size:18px;margin-bottom:4px">PowerLine sign-in</div>
+          <div style="color:#AEB9C7;font-size:13px;margin-bottom:14px">Sign in once. This browser stays signed in and rings for calls.</div>
           <label style="font-size:12px;color:#AEB9C7">Agent ID</label>
-          <input data-k="agent" style="${css.input}" autocapitalize="off" spellcheck="false" required>
-          <div data-k="codeRow" style="display:none">
-            <label style="font-size:12px;color:#AEB9C7">6-digit code</label>
-            <input data-k="code" style="${css.input}" inputmode="numeric" autocomplete="one-time-code" maxlength="10">
-          </div>
+          <input data-k="agent" name="username" autocomplete="username" style="${css.input}" autocapitalize="off" spellcheck="false" required>
+          <label style="font-size:12px;color:#AEB9C7">PIN</label>
+          <input data-k="pin" name="password" type="password" autocomplete="current-password" style="${css.input}" maxlength="10" required>
           <div data-k="err" style="color:#E5675A;font-size:13px;min-height:18px;margin-bottom:8px"></div>
-          <button data-k="go" type="submit" style="${css.primary}">Send code</button>
+          <button data-k="go" type="submit" style="${css.primary}">Sign in</button>
           <button data-k="cancel" type="button" style="${css.link}">Cancel</button>
         </form>`;
       document.body.appendChild(overlay);
       const $ = (k) => overlay.querySelector(`[data-k="${k}"]`);
-      let step = "agent";
       const close = () => overlay.remove();
+      try {
+        const last = store.getItem("powerline.lastAgent");
+        if (last) $("agent").value = last;
+      } catch (_) {}
 
       $("cancel").onclick = () => {
         close();
@@ -112,31 +124,26 @@
         e.preventDefault();
         $("err").textContent = "";
         $("go").disabled = true;
+        $("go").textContent = "Signing in…";
         const agent = $("agent").value.trim().toLowerCase();
+        const pin = $("pin").value.trim();
         try {
-          if (step === "agent") {
-            const r = await post("auth-start", { agent });
-            if (!r.ok) throw new Error("Could not send a code. Try again shortly.");
-            step = "code";
-            $("agent").readOnly = true;
-            $("codeRow").style.display = "block";
-            $("hint").textContent = "If that agent ID exists, a code was texted to its phone.";
-            $("go").textContent = "Sign in";
-            $("code").focus();
-          } else {
-            const r = await post("auth-verify", { agent, code: $("code").value.trim() });
-            if (!r.ok || !r.payload.session) throw new Error("That code didn't work.");
-            saveSession(r.payload);
-            close();
-            resolve(r.payload);
-          }
+          const r = await post("auth-verify", { agent, code: pin });
+          if (!r.ok || !r.payload.session) throw new Error("Wrong Agent ID or PIN.");
+          saveSession(r.payload);
+          try {
+            store.setItem("powerline.lastAgent", agent);
+          } catch (_) {}
+          close();
+          resolve(r.payload);
         } catch (err) {
-          $("err").textContent = err.message;
+          $("err").textContent = err.message || "Sign-in failed. Check your connection.";
         } finally {
           $("go").disabled = false;
+          $("go").textContent = "Sign in";
         }
       };
-      $("agent").focus();
+      ($("agent").value ? $("pin") : $("agent")).focus();
     });
   }
 
@@ -257,6 +264,8 @@
     const call = active();
     if (call) call.sendDigits(digits);
   };
+
+  window.powerlineTwilioHasSession = () => Boolean(currentSession());
 
   window.powerlineTwilioSignOut = () => {
     clearSession();

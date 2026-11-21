@@ -81,6 +81,9 @@ class _NativeTwilioPlatform implements TwilioPlatform {
   }
 
   @override
+  bool hasSavedSession() => false;
+
+  @override
   Future<String> placeCall(String destination) async {
     final callId = 'twilio_${DateTime.now().millisecondsSinceEpoch}';
     final token = await _fetchToken();

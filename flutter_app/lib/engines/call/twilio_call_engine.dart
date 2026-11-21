@@ -9,6 +9,7 @@ import 'twilio_platform_contract.dart';
 
 class TwilioCallEngine implements CallEngine {
   static const tokenUrl = String.fromEnvironment('POWERLINE_VOICE_TOKEN_URL');
+  static const callerId = String.fromEnvironment('POWERLINE_CALLER_ID');
 
   final TwilioPlatform _platform;
   final _stateController = StreamController<ActiveCallSnapshot>.broadcast();
@@ -67,6 +68,18 @@ class TwilioCallEngine implements CallEngine {
       _onIncoming,
     );
     _initialized = true;
+  }
+
+  /// Goes online automatically when this browser is already signed in,
+  /// so inbound calls ring without any clicks (like a desk phone).
+  Future<void> resumeIfSignedIn() async {
+    if (!kIsWeb || tokenUrl.isEmpty || _initialized) return;
+    try {
+      if (!_platform.hasSavedSession()) return;
+      await initialize();
+    } catch (error) {
+      _errorController.add(CallEngineError('twilio', error.toString()));
+    }
   }
 
   @override
