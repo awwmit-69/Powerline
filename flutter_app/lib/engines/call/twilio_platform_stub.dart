@@ -19,6 +19,10 @@ class _UnsupportedTwilioPlatform implements TwilioPlatform {
   bool hasSavedSession() => false;
   @override
   Future<String> placeCall(String destination) async => _unsupported();
+
+  @override
+  Future<String> aiCall(String destination, String tokenUrl) async =>
+      _unsupported();
   @override
   void accept(String callId) => _unsupported();
   @override

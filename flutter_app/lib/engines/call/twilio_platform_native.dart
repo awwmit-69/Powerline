@@ -96,6 +96,10 @@ class _NativeTwilioPlatform implements TwilioPlatform {
   }
 
   @override
+  Future<String> aiCall(String destination, String tokenUrl) async =>
+      throw UnsupportedError('AI calls are started from the web app.');
+
+  @override
   void accept(String callId) => unawaited(
         _channel.invokeMethod<void>('accept', {'callId': callId}),
       );

@@ -62,6 +62,12 @@ class _WebTwilioPlatform implements TwilioPlatform {
   }
 
   @override
+  Future<String> aiCall(String destination, String tokenUrl) async {
+    final sid = await _promise('powerlineAiCall', [destination, tokenUrl]);
+    return sid.toString();
+  }
+
+  @override
   void accept(String callId) =>
       js.context.callMethod('powerlineTwilioAccept', [callId]);
   @override

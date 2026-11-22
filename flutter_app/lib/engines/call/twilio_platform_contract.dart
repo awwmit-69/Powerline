@@ -16,6 +16,10 @@ abstract class TwilioPlatform {
   bool hasSavedSession();
 
   Future<String> placeCall(String destination);
+
+  /// Opens the consent-gated AI-call dialog; the server dials [destination]
+  /// and hands the call to the AI agent. Returns the call SID.
+  Future<String> aiCall(String destination, String tokenUrl);
   void accept(String callId);
   void reject(String callId);
   void hangup();

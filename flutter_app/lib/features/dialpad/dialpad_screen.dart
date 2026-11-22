@@ -360,6 +360,14 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                             : 'Sign in (Agent ID + PIN)',
                       ),
                     ),
+                  if (mode == 'twilio' && liveReady) ...[
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: _aiCall,
+                      icon: const Icon(Icons.smart_toy_outlined, size: 16),
+                      label: const Text('Have Maya (AI) call this number'),
+                    ),
+                  ],
                   if (mode == 'demo')
                     OutlinedButton.icon(
                       onPressed: () => ref
@@ -390,6 +398,30 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _aiCall() async {
+    final e164 = PhoneNumberUtil.normalize(digits);
+    if (e164 == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a valid US number first.')),
+      );
+      return;
+    }
+    try {
+      await ref.read(twilioCallEngineProvider).startAiCall(e164);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Maya is calling $e164 now.')),
+        );
+      }
+    } catch (error) {
+      if (mounted && !'$error'.contains('cancelled')) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('AI call not started: $error')),
+        );
+      }
+    }
   }
 
   Future<void> _goOnline() async {
