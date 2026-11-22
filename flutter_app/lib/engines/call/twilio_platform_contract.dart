@@ -12,6 +12,9 @@ abstract class TwilioPlatform {
     TwilioIncomingCallback onIncoming,
   );
 
+  /// True when this device already holds a signed-in agent session.
+  bool hasSavedSession();
+
   Future<String> placeCall(String destination);
   void accept(String callId);
   void reject(String callId);

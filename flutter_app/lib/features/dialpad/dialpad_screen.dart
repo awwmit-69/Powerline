@@ -12,6 +12,7 @@ import '../../core/theme/theme.dart';
 import '../../core/util/phone.dart';
 import '../../data/repositories/app_repository.dart';
 import '../../domain/models/models.dart';
+import '../../engines/call/twilio_call_engine.dart';
 import '../../providers.dart';
 
 import 'package:collection/collection.dart';
@@ -212,25 +213,41 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      DropdownButtonFormField<String>(
-                        isExpanded: true,
-                        initialValue: callerIdNumberId,
-                        decoration: const InputDecoration(
-                          labelText: 'Caller ID (outbound number)',
-                          isDense: true,
-                        ),
-                        items: [
-                          for (final n in s.numbers)
-                            DropdownMenuItem(
-                              value: n.id,
-                              child: Text(
-                                '${n.label} ${PhoneNumberUtil.format(n.e164)}',
-                                overflow: TextOverflow.ellipsis,
+                      if (mode == 'twilio')
+                        InputDecorator(
+                          decoration: const InputDecoration(
+                            labelText: 'Caller ID (outbound number)',
+                            isDense: true,
+                          ),
+                          child: Text(
+                            TwilioCallEngine.callerId.isEmpty
+                                ? 'Your Twilio number'
+                                : PhoneNumberUtil.format(
+                                    TwilioCallEngine.callerId,
+                                  ),
+                          ),
+                        )
+                      else
+                        DropdownButtonFormField<String>(
+                          isExpanded: true,
+                          initialValue: callerIdNumberId,
+                          decoration: const InputDecoration(
+                            labelText: 'Caller ID (outbound number)',
+                            isDense: true,
+                          ),
+                          items: [
+                            for (final n in s.numbers)
+                              DropdownMenuItem(
+                                value: n.id,
+                                child: Text(
+                                  '${n.label} ${PhoneNumberUtil.format(n.e164)}',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                            ),
-                        ],
-                        onChanged: (v) => setState(() => callerIdNumberId = v),
-                      ),
+                          ],
+                          onChanged: (v) =>
+                              setState(() => callerIdNumberId = v),
+                        ),
                       const SizedBox(height: 8),
                       SegmentedButton<String>(
                         segments: const [
@@ -340,7 +357,7 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                       label: Text(
                         ref.read(twilioCallEngineProvider).isOnline
                             ? 'Online — receiving calls'
-                            : 'Sign in & receive calls',
+                            : 'Sign in (Agent ID + PIN)',
                       ),
                     ),
                   if (mode == 'demo')

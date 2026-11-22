@@ -78,10 +78,37 @@ function parseAgents(value) {
   return map;
 }
 
+// AGENT_PINS env format: "agentId:PIN,agent2:PIN" (PIN: 4-10 letters/digits).
+// A bare "PIN" (no agent id) applies to the only agent in AGENTS.
+function parsePins(value, agentsValue) {
+  const map = new Map();
+  const clean = (x) => String(x || '').trim().replace(/^['"]|['"]$/g, '').trim();
+  const raw = clean(value);
+  if (!raw) return map;
+  const okPin = (p) => /^[A-Za-z0-9]{4,10}$/.test(p);
+  if (!raw.includes(':')) {
+    const agents = [...parseAgents(agentsValue).keys()];
+    if (agents.length === 1 && okPin(raw)) map.set(agents[0], raw);
+    return map;
+  }
+  raw
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .forEach((pair) => {
+      const idx = pair.indexOf(':');
+      if (idx <= 0) return;
+      const id = clean(pair.slice(0, idx)).toLowerCase();
+      const pin = clean(pair.slice(idx + 1));
+      if (/^[a-z0-9_.-]{2,32}$/.test(id) && okPin(pin)) map.set(id, pin);
+    });
+  return map;
+}
+
 function rejectTwiml(twiml, message) {
   twiml.say({ voice: 'Polly.Joanna' }, message);
   twiml.hangup();
   return twiml;
 }
 
-module.exports = { checkDestination, normalizeNanp, parseAgents, rejectTwiml, BLOCKED_NPA };
+module.exports = { checkDestination, normalizeNanp, parseAgents, parsePins, rejectTwiml, BLOCKED_NPA };
