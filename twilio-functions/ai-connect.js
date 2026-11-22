@@ -20,7 +20,7 @@ exports.handler = async function (context, event, callback) {
     vars: {
       call_direction: 'outbound',
       business_number: context.CALLER_ID,
-      lead_first_name: event.first_name || '',
+      lead_first_name: event.first_name || 'there',
       vertical: event.vertical || 'general',
     },
   });

@@ -39,7 +39,7 @@ exports.handler = function (context, event, callback) {
             from: event.From,
             to: event.To || context.CALLER_ID,
             direction: 'inbound',
-            vars: { call_direction: 'inbound', business_number: context.CALLER_ID },
+            vars: { call_direction: 'inbound', business_number: context.CALLER_ID, lead_first_name: 'there', vertical: 'general' },
           })
           .then((aiXml) => {
             if (aiXml) {
