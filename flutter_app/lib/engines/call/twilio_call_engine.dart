@@ -102,7 +102,8 @@ class TwilioCallEngine implements CallEngine {
   /// The consent dialog runs in the browser before anything is dialed.
   Future<String> startAiCall(String toE164) {
     if (!kIsWeb || tokenUrl.isEmpty) {
-      throw StateError('AI calls need the PowerLine web app with Twilio set up.');
+      throw StateError(
+          'AI calls need the PowerLine web app with Twilio set up.');
     }
     return _platform.aiCall(toE164, tokenUrl);
   }
