@@ -238,6 +238,91 @@
     return callId;
   };
 
+  // ---------- AI agent call (Maya) — consent-gated ----------
+  function aiCallDialog(destination) {
+    return new Promise((resolve, reject) => {
+      const input = "width:100%;box-sizing:border-box;margin:6px 0 12px;padding:10px 12px;border-radius:10px;border:1px solid #243444;background:#0B1B2B;color:#F4F2EC;font-size:14px";
+      const overlay = document.createElement("div");
+      overlay.setAttribute("style", "position:fixed;inset:0;background:rgba(11,27,43,.78);display:flex;align-items:center;justify-content:center;z-index:2147483647;font-family:Manrope,system-ui,sans-serif");
+      const today = new Date().toISOString().slice(0, 10);
+      overlay.innerHTML = `
+        <form style="background:#102A40;border:1px solid #243444;border-radius:16px;padding:22px;width:min(380px,92vw);color:#F4F2EC">
+          <div style="font-weight:800;font-size:18px">AI call: Maya</div>
+          <div style="color:#AEB9C7;font-size:13px;margin:4px 0 14px">Maya calls <b>${destination}</b> in her AI voice. Only call leads who gave written consent to AI calls.</div>
+          <label style="font-size:12px;color:#AEB9C7">First name (optional)</label>
+          <input data-k="first" style="${input}" maxlength="40">
+          <label style="font-size:12px;color:#AEB9C7">Service</label>
+          <select data-k="vertical" style="${input}">
+            <option value="roofing">Roofing</option><option value="solar">Solar</option>
+            <option value="insurance">Insurance</option><option value="hvac">HVAC</option>
+            <option value="general">General</option>
+          </select>
+          <label style="font-size:12px;color:#AEB9C7">Where consent was given</label>
+          <input data-k="source" style="${input}" placeholder="e.g. roofquote.com form" required minlength="3">
+          <label style="font-size:12px;color:#AEB9C7">Consent date</label>
+          <input data-k="date" type="date" style="${input}" value="${today}" max="${today}" required>
+          <label style="display:flex;gap:8px;font-size:13px;align-items:flex-start;margin-bottom:12px">
+            <input data-k="ok" type="checkbox" required style="margin-top:2px">
+            <span>This lead gave prior express written consent to AI/automated calls from us.</span>
+          </label>
+          <div data-k="err" style="color:#E5675A;font-size:13px;min-height:18px;margin-bottom:8px"></div>
+          <button data-k="go" type="submit" style="width:100%;padding:11px;border:0;border-radius:10px;background:#2C6BFF;color:#fff;font-weight:700;font-size:15px;cursor:pointer">Have Maya call</button>
+          <button data-k="cancel" type="button" style="background:none;border:0;color:#AEB9C7;cursor:pointer;margin-top:10px;font-size:13px">Cancel</button>
+        </form>`;
+      document.body.appendChild(overlay);
+      const $ = (k) => overlay.querySelector(`[data-k="${k}"]`);
+      $("cancel").onclick = () => { overlay.remove(); reject(new Error("cancelled")); };
+      overlay.querySelector("form").onsubmit = async (e) => {
+        e.preventDefault();
+        $("err").textContent = "";
+        $("go").disabled = true;
+        $("go").textContent = "Starting…";
+        try {
+          let s = await ensureSession();
+          const fields = () => ({
+            session: s.session,
+            to: destination,
+            first_name: $("first").value.trim(),
+            vertical: $("vertical").value,
+            consent_source: $("source").value.trim(),
+            consent_timestamp: `${$("date").value}T12:00:00Z`,
+            tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York",
+          });
+          let r = await post("ai-call", fields());
+          if (r.status === 401) {
+            clearSession();
+            s = await signInDialog();
+            r = await post("ai-call", fields());
+          }
+          if (!r.ok) {
+            const map = {
+              ai_outbound_disabled: "AI calling is switched off on the server.",
+              consent_required: "Consent source and date are required.",
+              do_not_call: "That number is on the Do-Not-Call list.",
+              outside_calling_hours: "Outside calling hours (8am–9pm lead time).",
+              bad_destination: (r.payload && r.payload.message) || "That number can't be called.",
+            };
+            throw new Error(map[r.payload && r.payload.error] || "Could not start the AI call.");
+          }
+          overlay.remove();
+          resolve(r.payload.callSid || "started");
+        } catch (err) {
+          $("err").textContent = err.message || "Could not start the AI call.";
+        } finally {
+          $("go").disabled = false;
+          $("go").textContent = "Have Maya call";
+        }
+      };
+      $("source").focus();
+    });
+  }
+
+  window.powerlineAiCall = async (destination, url) => {
+    if (!apiBase && url) apiBase = String(url).replace(/\/voice-token\/?$/, "");
+    if (!apiBase) throw new Error("PowerLine server is not configured");
+    return aiCallDialog(destination);
+  };
+
   window.powerlineTwilioAccept = (callId) => {
     const call = calls.get(callId);
     if (call) call.accept();

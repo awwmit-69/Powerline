@@ -98,6 +98,16 @@ class TwilioCallEngine implements CallEngine {
     return callId;
   }
 
+  /// Server dials [toE164] and the AI agent (Maya) talks to the lead.
+  /// The consent dialog runs in the browser before anything is dialed.
+  Future<String> startAiCall(String toE164) {
+    if (!kIsWeb || tokenUrl.isEmpty) {
+      throw StateError(
+          'AI calls need the PowerLine web app with Twilio set up.');
+    }
+    return _platform.aiCall(toE164, tokenUrl);
+  }
+
   void _onIncoming(String callId, String from) {
     final snapshot = ActiveCallSnapshot(
       callId: callId,

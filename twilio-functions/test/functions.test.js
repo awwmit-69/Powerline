@@ -10,6 +10,7 @@ global.Twilio.Response = FakeResponse;
 global.Runtime = { getFunctions: () => ({
   dialrules: { path: path.join(__dirname, '..', 'dialrules.private.js') },
   session: { path: path.join(__dirname, '..', 'session.private.js') },
+  ai: { path: path.join(__dirname, '..', 'ai.private.js') },
 }) };
 
 const ORIGIN = 'https://awwmit-69.github.io';
@@ -117,4 +118,71 @@ test('PIN backup sign-in', async () => {
   assert.equal(rules.parsePins('Shahedul : 1234', 'shahedul:+16893036969').get('shahedul'), '1234');
   r = await run('auth-verify.js', { ...req(), agent: 'shahedul', code: 'Dhaka2026' }, { ...ctx, AGENT_PINS: 'Dhaka2026' });
   assert.equal(r.status, 200);
+});
+
+// ---------------- AI agent ----------------
+const ai = require('../ai.private.js');
+const aiCtx = { ...ctx, ELEVENLABS_API_KEY: 'k'.repeat(20), ELEVENLABS_AGENT_ID: 'agent_x', AI_OUTBOUND: 'on', AI_OUTBOUND_TOKEN: 't'.repeat(32), DOMAIN_NAME: 'x.twil.io' };
+const TWIML = '<?xml version="1.0" encoding="UTF-8"?><Response><Connect><Stream url="wss://x"/></Connect></Response>';
+
+test('ai flags and helpers', () => {
+  assert.equal(ai.inboundEnabled(ctx), false);
+  assert.equal(ai.inboundEnabled(aiCtx), true);
+  assert.equal(ai.inboundEnabled({ ...aiCtx, AI_INBOUND: 'off' }), false);
+  assert.equal(ai.outboundEnabled({ ...aiCtx, AI_OUTBOUND: '' }), false);
+  assert.deepEqual(ai.cleanVars({ a: ' x ', 'bad key': 1, e: '' }), { a: 'x' });
+  const noon = new Date('2026-11-21T17:00:00Z'); // 12:00 New York
+  const night = new Date('2026-11-22T04:00:00Z'); // 23:00 New York
+  assert.equal(ai.withinCallingHours({}, 'America/New_York', noon), true);
+  assert.equal(ai.withinCallingHours({}, 'America/New_York', night), false);
+  assert.equal(ai.withinCallingHours({}, 'Not/AZone', noon), false);
+  assert.ok(ai.dncSet({ DNC_NUMBERS: '+1 (607) 663-9669' }).has('+16076639669'));
+});
+
+test('ai registerCall', async () => {
+  let sent;
+  const ok = async (url, opts) => { sent = { url, opts }; return { ok: true, status: 200, text: async () => JSON.stringify(TWIML) }; };
+  const xmlOut = await ai.registerCall(aiCtx, { from: '+15551234567', to: '+16073337825', direction: 'inbound', vars: { call_direction: 'inbound' } }, ok);
+  assert.equal(xmlOut, TWIML);
+  const body = JSON.parse(sent.opts.body);
+  assert.equal(body.agent_id, 'agent_x');
+  assert.equal(body.direction, 'inbound');
+  assert.equal(body.conversation_initiation_client_data.dynamic_variables.call_direction, 'inbound');
+  assert.equal(sent.opts.headers['xi-api-key'], aiCtx.ELEVENLABS_API_KEY);
+  const bad = async () => ({ ok: false, status: 401, text: async () => 'nope' });
+  assert.equal(await ai.registerCall(aiCtx, { from: 'a', to: 'b' }, bad), null);
+  const boom = async () => { throw new Error('x'); };
+  assert.equal(await ai.registerCall(aiCtx, { from: 'a', to: 'b' }, boom), null);
+  assert.equal(await ai.registerCall(ctx, { from: 'a', to: 'b' }, ok), null);
+});
+
+test('sip-inbound falls back to voicemail without AI, uses AI when configured', async () => {
+  const vm = (await run('sip-inbound.js', { DialCallStatus: 'no-answer', CallSid: 'CA1' })).toString();
+  assert.match(vm, /<Record/);
+  const realFetch = global.fetch;
+  global.fetch = async () => ({ ok: true, status: 200, text: async () => TWIML });
+  try {
+    const r = await run('sip-inbound.js', { DialCallStatus: 'no-answer', From: '+15551234567', To: '+16073337825', CallSid: 'CA2' }, aiCtx);
+    assert.equal(r.body, TWIML);
+    global.fetch = async () => ({ ok: false, status: 500, text: async () => 'err' });
+    const r2 = (await run('sip-inbound.js', { DialCallStatus: 'no-answer', CallSid: 'CA3' }, aiCtx)).toString();
+    assert.match(r2, /<Record/);
+  } finally { global.fetch = realFetch; }
+});
+
+test('ai-call guards', async () => {
+  const bearer = (extra = {}) => ({ request: { headers: { authorization: 'Bearer ' + 't'.repeat(32) } }, to: '6076639669',
+    consent_timestamp: '2026-11-01T10:00:00Z', consent_source: 'roofquote form', tz: 'UTC', ...extra });
+  assert.equal((await run('ai-call.js', { ...bearer(), request: { headers: { authorization: 'Bearer wrong' } } }, aiCtx)).status, 401);
+  assert.equal((await run('ai-call.js', bearer(), { ...aiCtx, AI_OUTBOUND: 'off' })).status, 503);
+  assert.equal((await run('ai-call.js', bearer({ to: '911' }), aiCtx)).body.error, 'bad_destination');
+  assert.equal((await run('ai-call.js', bearer({ consent_timestamp: '' }), aiCtx)).body.error, 'consent_required');
+  assert.equal((await run('ai-call.js', bearer({ consent_source: '' }), aiCtx)).body.error, 'consent_required');
+  assert.equal((await run('ai-call.js', bearer(), { ...aiCtx, DNC_NUMBERS: '+16076639669' })).body.error, 'do_not_call');
+  assert.equal((await run('ai-call.js', bearer(), { ...aiCtx, AI_CALL_HOURS: '0-0' })).body.error, 'outside_calling_hours');
+});
+
+test('ai-connect hangs up on machines', async () => {
+  const x = (await run('ai-connect.js', { AnsweredBy: 'machine_end_beep', CallSid: 'CA9' }, aiCtx)).toString();
+  assert.match(x, /<Hangup\/>/);
 });

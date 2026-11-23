@@ -1,7 +1,8 @@
 // PROTECTED function /sip-inbound — Voice handler of the PowerLine number.
 // Rings, in parallel, every registered softphone (SIP_USERS on SIP_DOMAIN) and
 // every signed-in PowerLine browser agent (<Client> identities from AGENTS).
-// First device to answer wins. If nobody answers: voicemail (Console > Recordings).
+// First device to answer wins. If nobody answers: the ElevenLabs AI agent picks up
+// (when ELEVENLABS_* is set and AI_INBOUND is not off), else voicemail.
 
 exports.handler = function (context, event, callback) {
   const { parseAgents } = require(Runtime.getFunctions()['dialrules'].path);
@@ -30,8 +31,32 @@ exports.handler = function (context, event, callback) {
       twiml.hangup();
       return callback(null, twiml);
     }
-    say('Sorry, no one is available to take your call. Please leave a message after the tone.');
-    twiml.record({
+    // Nobody picked up: hand the caller to the AI agent if it's configured.
+    const ai = require(Runtime.getFunctions()['ai'].path);
+    if (ai.inboundEnabled(context)) {
+        return ai
+          .registerCall(context, {
+            from: event.From,
+            to: event.To || context.CALLER_ID,
+            direction: 'inbound',
+            vars: { call_direction: 'inbound', business_number: context.CALLER_ID, lead_first_name: 'there', vertical: 'general' },
+          })
+          .then((aiXml) => {
+            if (aiXml) {
+              console.log(`AI_INBOUND sid=${event.CallSid}`);
+              return callback(null, ai.rawTwimlResponse(aiXml));
+            }
+            return callback(null, voicemail());
+          })
+          .catch(() => callback(null, voicemail()));
+    }
+    return callback(null, voicemail());
+  }
+
+  function voicemail() {
+    const vm = new Twilio.twiml.VoiceResponse();
+    vm.say({ voice: 'Polly.Joanna' }, 'Sorry, no one is available to take your call. Please leave a message after the tone.');
+    vm.record({
       maxLength: parseInt(context.VM_MAX_SECONDS || '120', 10),
       playBeep: true,
       timeout: 5,
@@ -39,9 +64,9 @@ exports.handler = function (context, event, callback) {
       action: '/sip-inbound?step=vm-done',
       method: 'POST',
     });
-    say('No message was recorded. Goodbye.');
-    twiml.hangup();
-    return callback(null, twiml);
+    vm.say({ voice: 'Polly.Joanna' }, 'No message was recorded. Goodbye.');
+    vm.hangup();
+    return vm;
   }
 
   if ((!domain || sipUsers.length === 0) && clientAgents.length === 0) {
