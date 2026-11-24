@@ -11,6 +11,7 @@ global.Runtime = { getFunctions: () => ({
   dialrules: { path: path.join(__dirname, '..', 'dialrules.private.js') },
   session: { path: path.join(__dirname, '..', 'session.private.js') },
   ai: { path: path.join(__dirname, '..', 'ai.private.js') },
+  appt: { path: path.join(__dirname, '..', 'appt.private.js') },
 }) };
 
 const ORIGIN = 'https://awwmit-69.github.io';
@@ -185,4 +186,70 @@ test('ai-call guards', async () => {
 test('ai-connect hangs up on machines', async () => {
   const x = (await run('ai-connect.js', { AnsweredBy: 'machine_end_beep', CallSid: 'CA9' }, aiCtx)).toString();
   assert.match(x, /<Hangup\/>/);
+});
+
+// ---------------- Appointments ----------------
+const appt = require('../appt.private.js');
+const apptCtx = { ...aiCtx, ELEVENLABS_AGENT_ID: 'agent_x' };
+
+test('appointment slots: Mon-Sat 9-18 local, DST-safe, lead time', () => {
+  const cfg = appt.config({});
+  const now = Date.parse('2026-11-23T12:00:00Z'); // Mon 7:00 New York
+  const slots = appt.allSlots(cfg, 'America/New_York', now);
+  // first slot Monday 9:00 ET = 14:00Z (lead time 2h from 07:00 -> 09:00 ok)
+  assert.equal(new Date(slots[0]).toISOString(), '2026-11-23T14:00:00.000Z');
+  for (const ts of slots) {
+    const p = appt.zoneParts(ts, 'America/New_York');
+    assert.ok(p.wd >= 1 && p.wd <= 6, 'no Sundays');
+    assert.ok(p.h >= 9 && p.h <= 17, 'within hours');
+  }
+  assert.equal(slots.filter((ts) => appt.zoneParts(ts, 'America/New_York').d === 23).length, 9);
+  // Chicago is an hour behind -> 9:00 CT = 15:00Z
+  assert.equal(new Date(appt.allSlots(cfg, 'America/Chicago', now)[0]).toISOString(), '2026-11-23T15:00:00.000Z');
+  // DST: 9:00 ET on 2026-03-09 (after spring forward) = 13:00Z
+  const spring = appt.allSlots(cfg, 'America/New_York', Date.parse('2026-03-09T09:00:00Z'));
+  assert.equal(new Date(spring[0]).toISOString(), '2026-03-09T13:00:00.000Z');
+  assert.equal(appt.slotKey(Date.parse('2026-11-23T14:00:00Z')), 'slot-2026-11-23T14:00');
+  assert.equal(appt.validTz('Nope/Zone'), false);
+});
+
+test('verifyConversation', async () => {
+  const live = async () => ({ ok: true, json: async () => ({ agent_id: 'agent_x', status: 'in-progress' }) });
+  const other = async () => ({ ok: true, json: async () => ({ agent_id: 'agent_y', status: 'in-progress' }) });
+  const done = async () => ({ ok: true, json: async () => ({ agent_id: 'agent_x', status: 'done' }) });
+  assert.equal(await appt.verifyConversation(apptCtx, 'conv_abcdefghijkl', live), true);
+  assert.equal(await appt.verifyConversation(apptCtx, 'conv_abcdefghijkl', other), false);
+  assert.equal(await appt.verifyConversation(apptCtx, 'conv_abcdefghijkl', done), false);
+  assert.equal(await appt.verifyConversation(apptCtx, 'bad id', live), false);
+});
+
+test('appt-book: validates, books once, offers alternatives when taken', async () => {
+  const store = new Map();
+  const orig = { list: appt.listBookings, create: appt.createBooking, verify: appt.verifyConversation };
+  appt.listBookings = async () => [...store.entries()].map(([key, d]) => ({ key, ...d }));
+  appt.createBooking = async (_c, data) => {
+    const key = appt.slotKey(Date.parse(data.start));
+    if (store.has(key)) return { ok: false, reason: 'slot_taken' };
+    store.set(key, data); return { ok: true, booking: { key, ...data } };
+  };
+  appt.verifyConversation = async (_c, id) => id === 'conv_okokokokokok';
+  try {
+    const slot = new Date(appt.allSlots(appt.config({}), 'America/New_York')[0]).toISOString();
+    const ev = { conversation_id: 'conv_okokokokokok', start: slot, timezone: 'America/New_York', name: 'Jane Doe',
+      phone: '(607) 663-9669', address: '1 Main St', zip: '13760', vertical: 'roofing' };
+    assert.equal((await run('appt-book.js', { ...ev, conversation_id: 'conv_badbadbadbad' }, apptCtx)).status, 401);
+    assert.equal((await run('appt-book.js', { ...ev, phone: '' }, apptCtx)).body.error, 'missing_fields');
+    assert.equal((await run('appt-book.js', { ...ev, start: '2026-11-29T15:00:00Z' }, apptCtx)).body.error, 'invalid_time');
+    const ok = await run('appt-book.js', ev, apptCtx);
+    assert.equal(ok.body.booked, true);
+    assert.equal([...store.values()][0].phone, '+16076639669');
+    const again = await run('appt-book.js', ev, apptCtx);
+    assert.equal(again.body.error, 'slot_taken');
+    assert.ok(again.body.alternatives.length > 0);
+    const avail = await run('appt-availability.js', { conversation_id: 'conv_okokokokokok', timezone: 'America/New_York' }, apptCtx);
+    assert.ok(!avail.body.slots.some((s) => s.start === slot), 'booked slot hidden');
+    assert.equal(avail.body.slots.length, 6);
+  } finally {
+    appt.listBookings = orig.list; appt.createBooking = orig.create; appt.verifyConversation = orig.verify;
+  }
 });

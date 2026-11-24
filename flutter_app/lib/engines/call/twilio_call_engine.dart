@@ -108,6 +108,14 @@ class TwilioCallEngine implements CallEngine {
     return _platform.aiCall(toE164, tokenUrl);
   }
 
+  /// Opens the Appointments panel (web only).
+  Future<void> openAppointments() {
+    if (!kIsWeb || tokenUrl.isEmpty) {
+      throw StateError('Appointments need the PowerLine web app.');
+    }
+    return _platform.openAppointments(tokenUrl);
+  }
+
   void _onIncoming(String callId, String from) {
     final snapshot = ActiveCallSnapshot(
       callId: callId,

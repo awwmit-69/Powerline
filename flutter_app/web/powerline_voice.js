@@ -317,6 +317,89 @@
     });
   }
 
+  // ---------- Appointments panel ----------
+  function esc(v) {
+    return String(v == null ? "" : v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  }
+
+  async function appointmentsPanel() {
+    const overlay = document.createElement("div");
+    overlay.setAttribute("style", "position:fixed;inset:0;background:rgba(11,27,43,.78);display:flex;align-items:center;justify-content:center;z-index:2147483647;font-family:Manrope,system-ui,sans-serif");
+    overlay.innerHTML = `
+      <div style="background:#102A40;border:1px solid #243444;border-radius:16px;padding:20px;width:min(560px,94vw);max-height:86vh;display:flex;flex-direction:column;color:#F4F2EC">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-weight:800;font-size:18px">Appointments</div>
+          <div><button data-k="refresh" style="background:#243444;border:0;color:#F4F2EC;border-radius:8px;padding:6px 10px;cursor:pointer;margin-right:6px">Refresh</button>
+          <button data-k="close" style="background:none;border:0;color:#AEB9C7;cursor:pointer;font-size:14px">Close</button></div>
+        </div>
+        <div data-k="list" style="overflow:auto;flex:1;font-size:14px">Loading…</div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const $ = (k) => overlay.querySelector(`[data-k="${k}"]`);
+    $("close").onclick = () => overlay.remove();
+
+    async function load() {
+      $("list").textContent = "Loading…";
+      let s = await ensureSession();
+      let r = await post("appt-list", { session: s.session });
+      if (r.status === 401) {
+        clearSession();
+        s = await signInDialog();
+        r = await post("appt-list", { session: s.session });
+      }
+      if (!r.ok) {
+        $("list").textContent = "Could not load appointments.";
+        return;
+      }
+      const items = r.payload.appointments || [];
+      if (!items.length) {
+        $("list").innerHTML = `<div style="color:#AEB9C7;padding:12px 0">No upcoming appointments yet.</div>`;
+        return;
+      }
+      $("list").innerHTML = items
+        .map(
+          (a) => `
+        <div style="border:1px solid #243444;border-radius:12px;padding:12px;margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;gap:8px">
+            <div style="font-weight:700">${esc(a.label)}</div>
+            <span style="background:#243444;border-radius:6px;padding:2px 8px;font-size:12px;text-transform:capitalize">${esc(a.vertical)}</span>
+          </div>
+          <div style="margin-top:6px">${esc(a.name)} · <a href="tel:${esc(a.phone)}" style="color:#7FB2FF">${esc(a.phone)}</a></div>
+          <div style="color:#AEB9C7">${esc(a.address)} ${esc(a.zip)}</div>
+          ${a.notes ? `<div style="color:#AEB9C7;margin-top:4px;font-size:13px">${esc(a.notes)}</div>` : ""}
+          <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+            <span style="color:#6E7F92;font-size:12px">Booked by ${esc(a.source || "maya")}</span>
+            <button data-cancel="${esc(a.key)}" style="background:none;border:1px solid #E5675A;color:#E5675A;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:12px">Cancel</button>
+          </div>
+        </div>`,
+        )
+        .join("");
+      overlay.querySelectorAll("[data-cancel]").forEach((b) => {
+        b.onclick = async () => {
+          if (b.dataset.confirm !== "1") {
+            b.dataset.confirm = "1";
+            b.textContent = "Tap again to cancel";
+            return;
+          }
+          b.disabled = true;
+          const s2 = await ensureSession();
+          const rr = await post("appt-list", { session: s2.session, action: "cancel", key: b.dataset.cancel });
+          if (rr.ok) await load();
+          else b.textContent = "Cancel failed";
+        };
+      });
+    }
+    $("refresh").onclick = load;
+    await load();
+    return "opened";
+  }
+
+  window.powerlineAppointments = async (url) => {
+    if (!apiBase && url) apiBase = String(url).replace(/\/voice-token\/?$/, "");
+    if (!apiBase) throw new Error("PowerLine server is not configured");
+    return appointmentsPanel();
+  };
+
   window.powerlineAiCall = async (destination, url) => {
     if (!apiBase && url) apiBase = String(url).replace(/\/voice-token\/?$/, "");
     if (!apiBase) throw new Error("PowerLine server is not configured");

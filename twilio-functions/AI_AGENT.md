@@ -64,7 +64,7 @@ IF INBOUND (someone called us and no one picked up):
    - a contractor or partner
    - something else
 3. Homeowner looking for a service: run the qualification below.
-4. Everyone else: take their name, best callback number, and a short message.
+4. Everyone else: take their name, best callback number, and a short message (no booking).
 5. Confirm the details back and tell them someone will follow up soon.
 
 IF OUTBOUND (they requested a {{vertical}} quote and agreed to be contacted):
@@ -80,8 +80,15 @@ QUALIFICATION (one question at a time):
   - hvac: system age, what's wrong (no heat/cool, noisy, high bills), repair or replace
 - Timeline: within 30 days, 1–3 months, or just researching.
 - All decision-makers available for a 30-minute visit?
-- Offer an appointment: ask for two preferred days and morning/afternoon/evening.
-- Confirm name, best number, address, and appointment window. Tell them a specialist will confirm by text or call.
+- Then book the visit (see BOOKING).
+
+BOOKING (always use the tools — never invent or promise a time the tools did not return):
+1. Work out the homeowner's time zone from their state or ZIP (examples: NY, FL, GA, NC, PA, OH, MI → America/New_York; TX, IL, TN, MN, MO, LA, AL → America/Chicago; CO, UT, NM → America/Denver; AZ → America/Phoenix; CA, WA, OR, NV → America/Los_Angeles).
+2. Ask which day works best. Call check_availability with that timezone (and preferred_date as YYYY-MM-DD if they named a day; the current UTC time is {{system__time_utc}}).
+3. Offer two or three of the returned times, using the labels as given.
+4. When they choose, collect or confirm: full name, best phone number (the number they're calling from is {{caller_number}} — ask "is this the best number?"), street address and ZIP.
+5. Call book_appointment with start exactly as returned, timezone, name, phone, address, zip, vertical, and a one-line note (roof age / bill / issue).
+6. If booked: read back the day, time and address, and say a specialist will see them then. If slot_taken: offer the alternatives it returns. If the calendar is unavailable: take their details and say a specialist will call to confirm.
 
 If they don't own the home or aren't interested: thank them and end politely.
 End every call with a short, friendly goodbye.
@@ -89,3 +96,12 @@ End every call with a short, friendly goodbye.
 
 ### Data collection (Agent → Analysis), saved per call
 `caller_name`, `callback_number`, `owns_home` (bool), `address_or_zip`, `vertical`, `timeline`, `appointment_window`, `do_not_call` (bool), `message`
+
+## Booking tools (ElevenLabs → Tools → webhook, method POST, JSON body)
+| Tool | URL | Body properties |
+|---|---|---|
+| `check_availability` | `https://powerline-sip-8162.twil.io/appt-availability` | `conversation_id` (dynamic variable `system__conversation_id`), `timezone` (string, LLM), `preferred_date` (string, LLM, optional) |
+| `book_appointment` | `https://powerline-sip-8162.twil.io/appt-book` | `conversation_id` (dynamic variable `system__conversation_id`), `start`, `timezone`, `name`, `phone`, `address`, `zip`, `vertical`, `notes` (LLM) |
+
+Tool calls are authenticated by checking with ElevenLabs that `conversation_id` is a live conversation of `ELEVENLABS_AGENT_ID`, so no shared secret is needed.
+Bookings are stored in Twilio Sync (map `appointments`, one item per slot, so a slot can't be double-booked). You can view and cancel them in PowerLine → **Appointments**.
