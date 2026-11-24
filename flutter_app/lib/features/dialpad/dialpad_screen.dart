@@ -370,7 +370,8 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                     const SizedBox(height: 8),
                     OutlinedButton.icon(
                       onPressed: _openAppointments,
-                      icon: const Icon(Icons.event_available_outlined, size: 16),
+                      icon:
+                          const Icon(Icons.event_available_outlined, size: 16),
                       label: const Text('Appointments'),
                     ),
                   ],
