@@ -20,6 +20,9 @@ abstract class TwilioPlatform {
   /// Opens the consent-gated AI-call dialog; the server dials [destination]
   /// and hands the call to the AI agent. Returns the call SID.
   Future<String> aiCall(String destination, String tokenUrl);
+
+  /// Opens the Appointments panel (bookings made by Maya).
+  Future<void> openAppointments(String tokenUrl);
   void accept(String callId);
   void reject(String callId);
   void hangup();

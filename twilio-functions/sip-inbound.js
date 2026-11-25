@@ -39,7 +39,7 @@ exports.handler = function (context, event, callback) {
             from: event.From,
             to: event.To || context.CALLER_ID,
             direction: 'inbound',
-            vars: { call_direction: 'inbound', business_number: context.CALLER_ID, lead_first_name: 'there', vertical: 'general' },
+            vars: { call_direction: 'inbound', business_number: context.CALLER_ID, lead_first_name: 'there', vertical: 'general', caller_number: String(event.From || '') },
           })
           .then((aiXml) => {
             if (aiXml) {
@@ -78,8 +78,11 @@ exports.handler = function (context, event, callback) {
 
   console.log(`INBOUND sid=${event.CallSid} sip=${sipUsers.length} clients=${clientAgents.length}`);
   const dial = twiml.dial({
-    timeout: parseInt(context.RING_SECONDS || '30', 10),
-    answerOnBridge: true,
+    // Answer the caller's leg right away (Twilio plays ringback) so the caller's
+    // own carrier can't time out at ~20s before we fall through to Maya/voicemail.
+    // Set ANSWER_ON_BRIDGE=true to restore the old "unanswered until picked up" mode.
+    timeout: parseInt(context.RING_SECONDS || '20', 10),
+    answerOnBridge: String(context.ANSWER_ON_BRIDGE || 'false') === 'true',
     action: '/sip-inbound',
     method: 'POST',
   });

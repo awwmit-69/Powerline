@@ -68,6 +68,11 @@ class _WebTwilioPlatform implements TwilioPlatform {
   }
 
   @override
+  Future<void> openAppointments(String tokenUrl) async {
+    await _promise('powerlineAppointments', [tokenUrl]);
+  }
+
+  @override
   void accept(String callId) =>
       js.context.callMethod('powerlineTwilioAccept', [callId]);
   @override

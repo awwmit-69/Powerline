@@ -367,6 +367,13 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
                       icon: const Icon(Icons.smart_toy_outlined, size: 16),
                       label: const Text('Have Maya (AI) call this number'),
                     ),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: _openAppointments,
+                      icon:
+                          const Icon(Icons.event_available_outlined, size: 16),
+                      label: const Text('Appointments'),
+                    ),
                   ],
                   if (mode == 'demo')
                     OutlinedButton.icon(
@@ -398,6 +405,18 @@ class _DialpadScreenState extends ConsumerState<DialpadScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _openAppointments() async {
+    try {
+      await ref.read(twilioCallEngineProvider).openAppointments();
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open appointments: $error')),
+        );
+      }
+    }
   }
 
   Future<void> _aiCall() async {
