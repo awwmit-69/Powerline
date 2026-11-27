@@ -72,7 +72,7 @@ class MayaScreen extends StatelessWidget {
 class _Loader extends StatefulWidget {
   final String action;
   final Widget Function(BuildContext, Map<String, dynamic>, VoidCallback)
-  builder;
+      builder;
   const _Loader({required this.action, required this.builder});
 
   @override
@@ -269,8 +269,8 @@ class _CallDetail extends StatelessWidget {
             }
             final d = snap.data!;
             final collected = (d['collected'] as Map? ?? const {});
-            final transcript = (d['transcript'] as List? ?? const [])
-                .cast<Map>();
+            final transcript =
+                (d['transcript'] as List? ?? const []).cast<Map>();
             return ListView(
               padding: const EdgeInsets.all(20),
               children: [
@@ -502,7 +502,8 @@ class _FlowEditorState extends State<_FlowEditor> {
                       ? PowerlineColors.textSecondary
                       : PowerlineColors.stateConnected,
                 ),
-                label: Text('${e.key.toString().replaceAll('_', ' ')}: ${e.value}'),
+                label: Text(
+                    '${e.key.toString().replaceAll('_', ' ')}: ${e.value}'),
               ),
           ],
         ),

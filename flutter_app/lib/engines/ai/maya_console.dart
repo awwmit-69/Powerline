@@ -3,8 +3,7 @@
 /// agent session lives; other platforms report [MayaConsole.available] false.
 library;
 
-import 'maya_console_stub.dart'
-    if (dart.library.html) 'maya_console_web.dart'
+import 'maya_console_stub.dart' if (dart.library.html) 'maya_console_web.dart'
     as implementation;
 
 const mayaTokenUrl = String.fromEnvironment('POWERLINE_VOICE_TOKEN_URL');
