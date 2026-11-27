@@ -8,6 +8,7 @@ import 'features/campaigns/campaigns_screen.dart';
 import 'features/contacts/contacts_screen.dart';
 import 'features/dialpad/dialpad_screen.dart';
 import 'features/home/home_screen.dart';
+import 'features/maya/maya_screen.dart';
 import 'features/messages/messages_screen.dart';
 import 'features/settings/settings_screen.dart';
 import 'features/shell/app_shell.dart';
@@ -40,6 +41,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (c, s) => const CampaignsScreen(),
           ),
           GoRoute(path: '/agents', builder: (c, s) => const AgentsScreen()),
+          GoRoute(path: '/maya', builder: (c, s) => const MayaScreen()),
           GoRoute(
             path: '/analytics',
             builder: (c, s) => const AnalyticsScreen(),

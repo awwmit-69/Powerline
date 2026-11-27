@@ -323,6 +323,36 @@
     return aiCallDialog(destination);
   };
 
+  // ---------- Maya console (/ai-console): signed-in JSON calls ----------
+  async function consoleCall(fieldsJson, url) {
+    if (!apiBase && url) apiBase = String(url).replace(/\/voice-token\/?$/, "");
+    if (!apiBase) throw new Error("PowerLine server is not configured");
+    const fields = JSON.parse(fieldsJson || "{}");
+    let s = await ensureSession();
+    let r = await post("ai-console", { ...fields, session: s.session });
+    if (r.status === 401) {
+      clearSession();
+      s = await signInDialog();
+      r = await post("ai-console", { ...fields, session: s.session });
+    }
+    if (!r.ok) {
+      const p = r.payload || {};
+      throw new Error(p.message || p.error || `Server error ${r.status}`);
+    }
+    return r.payload;
+  }
+
+  window.powerlineConsole = async (fieldsJson, url) => JSON.stringify(await consoleCall(fieldsJson, url));
+
+  // Returns a blob: URL the app can play (call recording or voicemail).
+  window.powerlineConsoleAudio = async (fieldsJson, url) => {
+    const p = await consoleCall(fieldsJson, url);
+    const bin = atob(p.base64 || "");
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return URL.createObjectURL(new Blob([bytes], { type: p.mime || "audio/mpeg" }));
+  };
+
   window.powerlineTwilioAccept = (callId) => {
     const call = calls.get(callId);
     if (call) call.accept();

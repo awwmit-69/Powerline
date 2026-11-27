@@ -1,6 +1,6 @@
 {
   "name": "powerline-twilio-functions",
   "private": true,
-  "scripts": { "test": "node --test test/functions.test.js test/booking.test.js" },
+  "scripts": { "test": "node --test test/functions.test.js test/booking.test.js test/console.test.js" },
   "devDependencies": { "twilio": "^5.0.0" }
 }

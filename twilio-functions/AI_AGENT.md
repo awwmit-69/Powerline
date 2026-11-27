@@ -37,6 +37,9 @@
 | `BOOKING_SLOT_MINUTES` | `60` | no |
 | `BOOKING_LEAD_MINUTES` | `120` (no bookings sooner than this) | no |
 | `OWNER_NOTIFY_PHONE` | owner's cell in E.164; gets a call per booking/message | no |
+| `AI_TRANSFER` | `on` (default) / `off`: Maya can hand live calls to your agents | no |
+| `TRANSFER_RING_SECONDS` | `25`: how long agents ring before the caller goes to voicemail | no |
+| `AI_ADMINS` | agent ids allowed to edit Maya's call flow in PowerLine (default: first agent in `AGENTS`) | no |
 | `OWNER_NOTIFY_SMS` | `off` until A2P 10DLC or toll-free verification is approved, then `on` | no |
 
 Function visibility:
@@ -46,6 +49,14 @@ Function visibility:
 - `/calendar`: Private
 - `/ai-tools`: Public (Bearer `AI_TOOLS_TOKEN`)
 - `/confirm-run`: Public (Bearer `CONFIRM_TOKEN`)
+- `/ai-console`: Public (signed-in PowerLine agent session; the **Maya** screen)
+
+## PowerLine "Maya" screen (agents)
+- **Calls:** every Maya call with play button, transcript, summary and the data she collected (from ElevenLabs call history).
+- **Voicemail:** Twilio voicemail recordings with play button.
+- **Bookings:** upcoming appointments, booked or confirmed.
+- **Call flow:** her greeting and script. Admins (`AI_ADMINS`) edit and save; it's live on her next call. The save keeps her tools, voice and model untouched, and refuses a script without the AI disclosure.
+- Recordings over 4 MB (very long calls) open in ElevenLabs → Call history instead.
 
 ## Google Calendar setup (one time per business)
 1. Google Cloud console → new project → enable **Google Calendar API**.
@@ -66,6 +77,7 @@ Every tool: method **POST**, header `Authorization: Bearer <AI_TOOLS_TOKEN>` (st
 | `confirm_appointment` | `confirm` | `event_id` | Mark an appointment confirmed. |
 | `reschedule_appointment` | `reschedule` | `event_id`, `start` | Move an appointment to a new open time. |
 | `cancel_appointment` | `cancel` | `event_id`, `reason` | Cancel an appointment. |
+| `transfer_to_agent` | `transfer` | `call_sid` (assign dynamic variable `system__call_sid`), `callback_number`, `reason` | Connect the caller to a live team member now. |
 | `take_message` | `message` | `caller_name`, `callback_number`, `message` | Pass a message to the owner right away. |
 
 If a tool response contains `say`, follow it. If a booking returns `slot_taken`, offer the `slots` it returns.
@@ -92,6 +104,7 @@ You are Maya, a warm, upbeat, efficient phone assistant for {{business_name}}, a
 ALWAYS:
 - Say you are an AI assistant in your first sentence. If asked whether you are a real person, say no, you are an AI assistant.
 - Keep each turn to 1–2 short sentences. Sound natural, not scripted. Never talk over the caller.
+- If the caller asks for a real person, is angry, or is ready to book right now and has questions you can't answer: call transfer_to_agent with call_sid {{system__call_sid}}, callback_number {{caller_number}}, and a 5-word reason. Say you're connecting them, then stop talking. If it fails, take a message.
 - If the person says stop, remove me, do not call, or not interested: apologize, confirm they will not be called again, and end the call politely.
 - Never promise prices, savings, approvals, or tax credits. Never ask for SSN, bank, or card details.
 - Emergencies: tell them to hang up and dial 911. You cannot connect emergency calls.

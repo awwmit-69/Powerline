@@ -10,6 +10,7 @@
 //   reschedule    { event_id, start }
 //   cancel        { event_id, reason? }
 //   message       { caller_name, callback_number, message }       -> owner gets a call/text
+//   transfer      { call_sid?, callback_number?, reason? }        -> live call rings your agents now
 //
 // Every write re-checks the calendar first, so two callers can never get the same slot.
 
@@ -23,6 +24,31 @@ function safeEqual(a, b) {
 
 const clean = (v, max = 200) => String(v == null ? '' : v).replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, max);
 const truthy = (v) => ['true', 'yes', '1', 'on', 'y'].includes(String(v || '').trim().toLowerCase());
+
+// Rings every softphone + signed-in browser agent. No answer -> voicemail
+// (sip-inbound step=transfer-done), never back to Maya.
+function transferTwiml(context, reason) {
+  const { parseAgents } = require(Runtime.getFunctions()['dialrules'].path);
+  const sipUsers = String(context.SIP_USERS || '').split(',').map((x) => x.trim()).filter(Boolean);
+  const agents = [...parseAgents(context.AGENTS).keys()];
+  if ((!context.SIP_DOMAIN || !sipUsers.length) && !agents.length) return null;
+  const vr = new Twilio.twiml.VoiceResponse();
+  vr.say({ voice: 'Polly.Joanna' }, 'One moment while I connect you.');
+  const dial = vr.dial({
+    timeout: parseInt(context.TRANSFER_RING_SECONDS || '25', 10),
+    answerOnBridge: true,
+    callerId: context.CALLER_ID,
+    action: '/sip-inbound?step=transfer-done',
+    method: 'POST',
+  });
+  if (context.SIP_DOMAIN) sipUsers.forEach((u) => dial.sip(`sip:${u}@${context.SIP_DOMAIN}`));
+  agents.forEach((id) => {
+    const c = dial.client();
+    c.identity(id);
+    if (reason) c.parameter({ name: 'transfer_reason', value: reason });
+  });
+  return vr.toString();
+}
 
 exports.handler = async function (context, event, callback) {
   const cal = require(Runtime.getFunctions()['calendar'].path);
@@ -141,6 +167,32 @@ exports.handler = async function (context, event, callback) {
       await cal.notifyOwner(context, `Message from ${clean(event.caller_name, 80) || 'a caller'}, callback ${phone.replace(/^\+1/, '').split('').join(' ')}. ${msg}`);
       console.log('AI_MESSAGE ok');
       return reply(200, { ok: true });
+    }
+
+    if (action === 'transfer') {
+      if (String(context.AI_TRANSFER || 'on').toLowerCase() === 'off') {
+        return reply(503, { error: 'transfer_off', say: 'No one can take the call right now. Take a message instead.' });
+      }
+      const client = cal.twilioClient(context);
+      let sid = clean(event.call_sid, 40);
+      if (!/^CA[0-9a-f]{32}$/i.test(sid)) {
+        // Fallback: find the live call by the caller's number.
+        const phone = phoneOf(event.callback_number);
+        sid = '';
+        if (phone) {
+          const live = [
+            ...(await client.calls.list({ status: 'in-progress', from: phone, limit: 5 })),
+            ...(await client.calls.list({ status: 'in-progress', to: phone, limit: 5 })),
+          ];
+          sid = live.length ? live[0].sid : '';
+        }
+      }
+      if (!sid) return reply(404, { error: 'call_not_found', say: 'Transfer failed. Take a message instead.' });
+      const twiml = transferTwiml(context, clean(event.reason, 120));
+      if (!twiml) return reply(503, { error: 'no_agents', say: 'No one can take the call right now. Take a message instead.' });
+      await client.calls(sid).update({ twiml });
+      console.log(`AI_TRANSFER sid=${sid}`);
+      return reply(200, { ok: true, say: 'Tell them you are connecting them now, then stop talking.' });
     }
 
     return reply(400, { error: 'unknown_action' });

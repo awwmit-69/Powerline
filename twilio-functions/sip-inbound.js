@@ -24,6 +24,16 @@ exports.handler = function (context, event, callback) {
     return callback(null, twiml);
   }
 
+  // After Maya transferred the caller to the agents: answered -> done, else voicemail.
+  if (event.step === 'transfer-done') {
+    console.log(`TRANSFER_RESULT status=${event.DialCallStatus || 'none'} sid=${event.CallSid}`);
+    if (event.DialCallStatus === 'completed' || event.DialCallStatus === 'answered') {
+      twiml.hangup();
+      return callback(null, twiml);
+    }
+    return callback(null, voicemail());
+  }
+
   // Second pass: <Dial action> after the ring attempt finished.
   if (event.DialCallStatus) {
     console.log(`DIAL_RESULT status=${event.DialCallStatus} sid=${event.CallSid}`);
