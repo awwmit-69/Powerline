@@ -22,6 +22,7 @@ const _navItems = [
   ('/voicemail', Icons.voicemail, 'Voicemail'),
   ('/contacts', Icons.people_outline, 'Contacts'),
   ('/campaigns', Icons.campaign_outlined, 'Campaigns'),
+  ('/maya', Icons.support_agent, 'Maya'),
   ('/agents', Icons.smart_toy_outlined, 'AI Agents'),
   ('/analytics', Icons.insights_outlined, 'Analytics'),
   ('/settings', Icons.settings_outlined, 'Settings'),
