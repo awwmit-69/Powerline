@@ -1,0 +1,37 @@
+name: Daily appointment confirmations
+
+# Every day at 10:23 AM New York time (15:23 UTC in winter, 14:23 UTC in summer),
+# Maya calls everyone booked for tomorrow to confirm or rebook.
+# Needs two repo secrets: POWERLINE_FUNCTIONS_URL (https://<service>.twil.io)
+# and CONFIRM_TOKEN (same value as the Twilio Functions env var).
+on:
+  schedule:
+    - cron: '23 15 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'List who would be called, without calling'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  confirm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger /confirm-run
+        env:
+          URL: ${{ secrets.POWERLINE_FUNCTIONS_URL }}
+          TOKEN: ${{ secrets.CONFIRM_TOKEN }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
+        run: |
+          if [ -z "$URL" ] || [ -z "$TOKEN" ]; then
+            echo "POWERLINE_FUNCTIONS_URL / CONFIRM_TOKEN secrets not set; skipping."
+            exit 0
+          fi
+          curl -fsS -X POST "$URL/confirm-run" \
+            -H "Authorization: Bearer $TOKEN" \
+            --data-urlencode "dry_run=$DRY_RUN"
+          echo

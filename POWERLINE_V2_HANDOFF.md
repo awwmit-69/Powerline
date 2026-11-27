@@ -104,3 +104,9 @@ Durable handoff so the next session continues without amnesia. Preserve → comm
 - Intervening: `a5af38d` (build #13, workflow-only update).
 - V2 source: `6566db6` (build #14).
 - Recommended backup: tag `powerline-pre-azd-v2` -> `ae5cc91`, and/or branch `backup/pre-azd-v2` from `ae5cc91`.
+
+## BOOKING MODULE (Nov 26, 2026) — branch `feat/booking`
+- New: `twilio-functions/calendar.private.js` (/calendar, Private), `ai-tools.js` (/ai-tools, Public, Bearer AI_TOOLS_TOKEN), `confirm-run.js` (/confirm-run, Public, Bearer CONFIRM_TOKEN), `.github/workflows/daily-confirm.yml` (10:23 AM ET daily).
+- Maya reads real open slots from the owner's Google Calendar (service account), books/looks up/confirms/reschedules/cancels, re-checks the slot before every write (no double booking), and the owner gets a phone call per booking/change/message (SMS behind OWNER_NOTIFY_SMS until A2P/TF verification).
+- Day-before confirm/rebook calls only for callers who said yes to a confirmation call, status booked, not DNC, inside AI_CALL_HOURS.
+- Tests: 22/22 pass (`cd twilio-functions && npm test`). Not yet verified against live Google/ElevenLabs/Twilio — see AI_AGENT.md setup.
